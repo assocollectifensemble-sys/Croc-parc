@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v firecrawl >/dev/null 2>&1 || npm install -g firecrawl-cli >/dev/null 2>&1; [ -n \"$FIRECRAWL_API_KEY\" ] && firecrawl login --api-key \"$FIRECRAWL_API_KEY\" >/dev/null 2>&1; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
