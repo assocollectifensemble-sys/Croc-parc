@@ -79,12 +79,17 @@ body{
   overflow:hidden;
 }
 
-/* ---- Bloc logo (bambou + wordmark) — identique sur tous les supports ---- */
+/* ---- Bloc logo (bambou + wordmark + crocodile) — identique sur tous les supports ---- */
 .mt-logo{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  color:var(--color-cream);
+}
+.mt-logo-row{
   display:flex;
   align-items:center;
   gap:14px;
-  color:var(--color-cream);
 }
 .mt-logo .bamboo{display:block;}
 .mt-logo .logo-text{display:flex;flex-direction:column;line-height:0.85;}
@@ -99,6 +104,21 @@ body{
   font-size:var(--text-logo-sub);
   letter-spacing:5px;
   margin-top:6px;
+}
+.mt-logo-croc{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:2px;
+  opacity:0.95;
+}
+.mt-logo-croc svg{display:block;}
+.mt-logo-croc span{
+  font-family:var(--font-label);
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:3px;
+  text-transform:uppercase;
 }
 
 /* ---- Ligne d'information avec pictogramme ---- */
