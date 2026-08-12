@@ -1,0 +1,148 @@
+/* ==========================================================================
+   LE MAÏ-TAÏ — Design tokens
+   Direction retenue : "Sous la Varangue" (bois, végétal, tiki en accent)
+   Ce fichier centralise couleurs, typographies, échelles et pictogrammes.
+   Il est chargé par tous les templates — ne pas dupliquer ces valeurs
+   ailleurs, ne pas coder une couleur ou une taille "en dur" dans un template.
+   ========================================================================== */
+
+:root{
+  /* ---- Couleurs ---- */
+  --color-brown-dark:#241811;    /* texte principal, fonds sombres */
+  --color-brown-mid:#4A3626;     /* texte secondaire */
+  --color-green-forest:#24331D;  /* fond bandeaux de sécurité, accents */
+  --color-terracotta:#B5432B;    /* couleur signature (tables du restaurant) */
+  --color-cream:#F5EEDF;         /* fond clair, texte sur fond sombre */
+  --color-gold:#C89B3C;          /* accent rare (liseré, détail) */
+
+  /* ---- Typographies (Google Fonts — voir <link> dans chaque template) ---- */
+  --font-display:'Fraunces', serif;              /* accroche */
+  --font-label:'Barlow Semi Condensed', sans-serif; /* dates, kickers, boutons */
+  --font-body:'Inter', sans-serif;               /* texte courant, détails */
+  --font-logo:'Permanent Marker', cursive;       /* mot "Maï-Taï" du bloc logo */
+
+  /* ---- Échelle de tailles — format carré (1080x1080) ---- */
+  --text-kicker:24px;
+  --text-headline:132px;
+  --text-date:46px;
+  --text-detail:22px;
+  --text-cta:26px;
+  --text-logo:40px;
+  --text-logo-sub:14px;
+
+  /* ---- Espacements ---- */
+  --space-2xs:8px;
+  --space-xs:14px;
+  --space-sm:24px;
+  --space-md:32px;
+  --space-lg:48px;
+  --space-xl:72px;   /* marge de sécurité latérale standard */
+
+  /* ---- Rayons ---- */
+  --radius-pill:100px;
+  --radius-sm:10px;
+
+  /* ---- Pictogrammes ---- */
+  --icon-size:20px;
+  --icon-stroke:2.2;
+  --icon-color:var(--color-terracotta);
+
+  /* ---- Structure ---- */
+  --safe-zone-story:250px; /* zone haute/basse masquée par l'UI Instagram en story */
+}
+
+/* Sur les formats story (1080x1920), le canevas est plus grand : on agrandit
+   l'échelle typographique et les espacements en conséquence. Chaque
+   template pose data-format="story" sur <body> pour hériter de ces valeurs. */
+body[data-format="story"]{
+  --text-kicker:26px;
+  --text-headline:150px;
+  --text-date:52px;
+  --text-detail:25px;
+  --text-cta:28px;
+  --icon-size:22px;
+  --space-md:34px;
+  --space-lg:56px;
+}
+
+/* ==========================================================================
+   Composants partagés
+   ========================================================================== */
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:var(--font-body);
+  background:var(--color-cream);
+  color:var(--color-brown-dark);
+  position:relative;
+  overflow:hidden;
+}
+
+/* ---- Bloc logo (bambou + wordmark) — identique sur tous les supports ---- */
+.mt-logo{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  color:var(--color-cream);
+}
+.mt-logo .bamboo{display:block;}
+.mt-logo .logo-text{display:flex;flex-direction:column;line-height:0.85;}
+.mt-logo .logo-text .maitai{
+  font-family:var(--font-logo);
+  font-size:var(--text-logo);
+  letter-spacing:0.5px;
+}
+.mt-logo .logo-text .restaurant{
+  font-family:var(--font-label);
+  font-weight:700;
+  font-size:var(--text-logo-sub);
+  letter-spacing:5px;
+  margin-top:6px;
+}
+
+/* ---- Ligne d'information avec pictogramme ---- */
+.mt-row{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  font-size:var(--text-detail);
+  font-weight:500;
+  color:var(--color-brown-mid);
+}
+.mt-row svg{flex:none;margin-top:3px;color:var(--icon-color);}
+.mt-row b{color:var(--color-brown-dark);font-weight:600;}
+
+/* ---- Bouton d'appel à l'action (pilule) ---- */
+.mt-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:14px;
+  background:var(--color-terracotta);
+  color:var(--color-cream);
+  padding:16px 30px;
+  border-radius:var(--radius-pill);
+  width:fit-content;
+}
+.mt-cta svg{flex:none;}
+.mt-cta .mt-cta-label{
+  font-family:var(--font-label);
+  font-weight:700;
+  font-size:var(--text-cta);
+}
+.mt-cta .mt-cta-num{
+  font-family:var(--font-body);
+  font-weight:700;
+  font-size:var(--text-cta);
+}
+
+/* ---- Bandeaux de sécurité story (haut/bas, jamais de texte dedans) ---- */
+.mt-safe-band{
+  height:var(--safe-zone-story);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+}
+.mt-safe-band.top{background:var(--color-green-forest);}
+.mt-safe-band.bottom{background:var(--color-terracotta);}
