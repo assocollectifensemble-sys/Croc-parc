@@ -16,7 +16,7 @@
      ============================================================ */
   :root{
     --mt-kicker:"Après les vacances scolaires";
-    --mt-titre:"On rouvre";
+    --mt-titre:"Nou artourne !";
     --mt-date:"Mardi 18 août";
     --mt-detail-1:"Ouvert du mardi au vendredi — fermé le lundi";
     --mt-detail-2:"Samedi & dimanche sur réservation — entrée principale CrocParc";
@@ -29,17 +29,17 @@
 
   html,body{width:1080px;height:1920px;display:flex;flex-direction:column;}
 
-  .photo-band{position:relative;width:1080px;height:900px;overflow:hidden;flex:none;}
+  .photo-band{position:relative;width:1080px;height:840px;overflow:hidden;flex:none;}
   .photo-band .photo{
     position:absolute;inset:0;
     background-image:var(--mt-photo);
     background-size:cover;
     background-position:50% 18%;
-    filter:grayscale(0.35) contrast(1.08) brightness(0.95);
+    filter:saturate(1.2) contrast(1.05) brightness(1.03);
   }
   .photo-band .tint{
     position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(36,25,17,0.4) 0%, rgba(36,25,17,0.05) 30%, rgba(36,51,29,0.55) 100%);
+    background:linear-gradient(180deg, rgba(200,155,60,0.10) 0%, rgba(200,155,60,0.02) 30%, rgba(181,67,43,0.28) 100%);
     mix-blend-mode:multiply;
   }
   .photo-band .fade-bottom{
@@ -48,32 +48,30 @@
   }
   .mt-logo{position:absolute;top:44px;left:56px;z-index:5;filter:drop-shadow(0 2px 10px rgba(0,0,0,0.45));}
 
-  .panel{position:relative;padding:0 var(--space-xl);color:var(--color-brown-dark);}
+  .panel{position:relative;padding:0 var(--space-xl);color:var(--color-brown-dark);overflow:hidden;}
   .kicker{
     font-family:var(--font-label);font-weight:700;font-size:var(--text-kicker);
     letter-spacing:4px;text-transform:uppercase;color:var(--color-terracotta);
-    margin-top:8px;
+    margin-top:14px;
   }
   .kicker::before{content:var(--mt-kicker);}
   h1{
     font-family:var(--font-display);font-weight:900;font-style:italic;
-    font-size:var(--text-headline);line-height:0.86;letter-spacing:-2px;
-    margin-top:10px;
+    font-size:var(--text-headline);line-height:0.94;letter-spacing:-1.5px;
+    margin-top:8px;
+    max-width:960px;
   }
   h1::before{content:var(--mt-titre);}
-  .date{
-    font-family:var(--font-label);font-weight:700;font-size:var(--text-date);
-    letter-spacing:1px;text-transform:uppercase;color:var(--color-terracotta);
-    margin-top:10px;
-  }
-  .date::before{content:var(--mt-date);}
+  .scribble{width:230px;height:17px;margin-top:0;margin-left:4px;}
+  .mt-sticker{margin-top:16px;}
+  .mt-sticker::before{content:var(--mt-date);}
 
-  .details{margin-top:var(--space-md);display:flex;flex-direction:column;gap:14px;}
+  .details{margin-top:24px;display:flex;flex-direction:column;gap:10px;}
   .detail-1::before{content:var(--mt-detail-1);}
   .detail-2::before{content:var(--mt-detail-2);}
   .detail-3::before{content:var(--mt-detail-3);}
 
-  .mt-cta{margin-top:var(--space-md);}
+  .mt-cta{margin-top:20px;}
   .mt-cta-label::before{content:var(--mt-cta-label);}
   .mt-cta-num::before{content:var(--mt-cta-num);}
 </style>
@@ -129,9 +127,14 @@
   </div>
 
   <div class="panel">
+    <div class="mt-grain"></div>
     <div class="kicker"></div>
-    <h1></h1>
-    <div class="date"></div>
+    <div class="mt-headline">
+      <div class="halo"></div>
+      <h1 class="mt-pop-shadow"></h1>
+      <svg class="scribble" viewBox="0 0 230 17" fill="none"><path d="M3 10c22-9 44-9 60-3s38 8 60 1 49-7 65 1 27 3 37-2" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="mt-sticker"></div>
 
     <div class="details">
       <div class="mt-row">
