@@ -14,12 +14,15 @@
      Fuseau du restaurant : Indian/Reunion (UTC+4), quel que soit le visiteur.
      0 = dimanche … 6 = samedi. Fermé le lundi (1).
      --------------------------------------------------------------------- */
+  // Le restaurant ouvre aussi 7j/7 pendant les vacances scolaires, mais le
+  // calendrier des vacances de La Réunion n'est pas connu du navigateur : la
+  // pastille ne peut donc pas le déduire seule. Elle reste volontairement
+  // prudente le lundi et le dit explicitement plutôt que d'annoncer à tort une
+  // fermeture. Le texte affiché en dur dans la page, lui, précise bien le 7j/7.
   var HORAIRES = {
-    // service du midi uniquement
-    ouverture: 11 * 60 + 30,   // 11h30
-    fermeture: 14 * 60,        // 14h00
-    joursOuverts: [0, 2, 3, 4, 5, 6],        // mardi → dimanche
-    joursOuvertsVacances: [0, 1, 2, 3, 4, 5, 6] // 7j/7 pendant les vacances scolaires
+    ouverture: 11 * 60 + 30,          // 11h30 — service du midi uniquement
+    fermeture: 14 * 60,               // 14h00
+    joursOuverts: [0, 2, 3, 4, 5, 6]  // dimanche, mardi → samedi
   };
 
   function heureALaReunion() {
@@ -91,6 +94,15 @@
 
   var tickDefilement = false;
   window.addEventListener("scroll", function () {
+    // Le filet de sécurité des apparitions tourne SANS passer par le verrou
+    // rAF : si l'animation frame n'était jamais servie (onglet en arrière-plan,
+    // page non rendue), le verrou resterait fermé et du contenu pourrait ne
+    // jamais devenir visible. La lisibilité ne doit dépendre d'aucun verrou.
+    // Le coût est nul une fois tout révélé : la liste est vide.
+    filetDeSecurite();
+
+    // Le reste (en-tête, barre d'appel) est purement décoratif : on peut le
+    // limiter à une frame sur deux sans risque.
     if (tickDefilement) return;
     tickDefilement = true;
     window.requestAnimationFrame(function () {
@@ -110,7 +122,7 @@
     var ouvert = typeof forcer === "boolean" ? forcer : burger.getAttribute("aria-expanded") !== "true";
     burger.setAttribute("aria-expanded", String(ouvert));
     navMobile.classList.toggle("est-ouvert", ouvert);
-    navMobile.setAttribute("aria-hidden", String(!ouvert));
+    if (ouvert) { navMobile.removeAttribute("inert"); } else { navMobile.setAttribute("inert", ""); }
     document.body.classList.toggle("menu-ouvert", ouvert);
     document.body.style.overflow = ouvert ? "hidden" : "";
     if (ouvert) {
@@ -137,14 +149,21 @@
   /* ---------------------------------------------------------------------
      4. APPARITIONS AU DÉFILEMENT — IntersectionObserver, une seule passe.
      --------------------------------------------------------------------- */
-  var aAnimer = document.querySelectorAll("[data-anim]");
+  var aAnimer = Array.prototype.slice.call(document.querySelectorAll("[data-anim]"));
+
+  function reveler(el) {
+    el.classList.add("est-visible");
+    var i = aAnimer.indexOf(el);
+    if (i !== -1) aAnimer.splice(i, 1);
+  }
+
   if (reduitLeMouvement || !("IntersectionObserver" in window)) {
-    aAnimer.forEach(function (el) { el.classList.add("est-visible"); });
+    aAnimer.slice().forEach(reveler);
   } else {
     var observateur = new IntersectionObserver(function (entrees) {
       entrees.forEach(function (entree) {
         if (!entree.isIntersecting) return;
-        entree.target.classList.add("est-visible");
+        reveler(entree.target);
         observateur.unobserve(entree.target);
       });
     }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
@@ -156,6 +175,24 @@
         el.style.setProperty("--delai", Math.min(freres, 5) * 90 + "ms");
       }
       observateur.observe(el);
+    });
+  }
+
+  /* Filet de sécurité. Un défilement très rapide (« fling » sur mobile, saut à
+     une ancre, restauration de position au rechargement) peut faire manquer
+     l'entrée d'un élément à l'observateur : le bloc resterait alors invisible
+     pour toujours. On repasse donc à chaque défilement sur ce qui n'a pas
+     encore été révélé et qui se trouve déjà au-dessus du bas de l'écran.
+     Règle de fond : aucun contenu ne doit jamais dépendre d'une animation
+     pour être lisible. */
+  function filetDeSecurite() {
+    if (!aAnimer.length) return;
+    var basEcran = window.innerHeight || document.documentElement.clientHeight;
+    aAnimer.slice().forEach(function (el) {
+      if (el.getBoundingClientRect().top < basEcran) {
+        if (typeof observateur !== "undefined") observateur.unobserve(el);
+        reveler(el);
+      }
     });
   }
 
@@ -239,5 +276,6 @@
   /* --------------------------------------------------------------------- */
   majPastilleOuverture();
   surDefilement();
+  filetDeSecurite();   // cas d'un chargement déjà positionné en bas de page
   document.documentElement.classList.add("js-actif");
 })();

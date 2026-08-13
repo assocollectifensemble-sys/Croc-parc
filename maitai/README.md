@@ -72,9 +72,10 @@ maitai/
 │   └── menu/               ← emplacement du futur PDF de la carte
 │
 └── docs/
-    ├── SEO.md              ← stratégie de mots-clés et justifications
-    ├── CREDITS.md          ← ⭐ origine de chaque image utilisée
-    └── SOURCES.md          ← d'où vient chaque information affichée
+    ├── SEO.md                    ← stratégie de mots-clés et justifications
+    ├── CREDITS.md                ← ⭐ statut de chaque image + où trouver les vraies
+    ├── SOURCES.md                ← ⭐ d'où vient chaque information affichée
+    └── telecharger-images.sh     ← récupère les photos réelles en une commande
 ```
 
 Les deux fichiers marqués ⭐ sont ceux à consulter en priorité avant toute
@@ -152,37 +153,51 @@ Une recherche de `github.io` dans le dossier `maitai/` les trouve tous.
 
 ## Remplacer les images
 
-**Les images publiées aujourd'hui sont provisoires.** Leur origine exacte est tracée
-dans [`docs/CREDITS.md`](docs/CREDITS.md) — à lire avant toute mise en ligne publique,
-certaines appartiennent à des visiteurs et non au restaurant.
+**Aucune photo réelle n'est en ligne pour l'instant.** Les douze visuels du site sont
+des SVG d'attente, reconnaissables à leur nom (`PLACEHOLDER-…`) et à la mention
+« VISUEL D'ATTENTE — À REMPLACER » affichée dessus.
 
-### La méthode
+Pourquoi : l'environnement de production de ce site n'avait pas accès aux domaines
+hébergeant les photos (politique réseau). Les pages ont pu être lues, les fichiers non.
+Tout est expliqué et tracé dans [`docs/CREDITS.md`](docs/CREDITS.md), qui liste **les
+URL des vraies photos** déjà identifiées.
 
-Chaque image n'apparaît **qu'une seule fois** dans `index.html`. Pour remplacer une
-photo :
+### Récupérer les photos existantes
 
-1. Déposer la nouvelle image dans le bon sous-dossier de `images/`
-2. **Garder exactement le même nom de fichier** → rien d'autre à faire, c'est terminé.
+```bash
+bash maitai/docs/telecharger-images.sh
+```
 
-Si le nom change, rechercher l'ancien nom dans `index.html` (une seule occurrence) et
-le remplacer.
+À lancer depuis votre machine. Les photos publiées par le restaurant sur Tripadvisor et
+celles de `croc-parc.re` atterrissent dans `maitai/images/_a-trier/`.
+
+### La méthode de remplacement
+
+Chaque image n'apparaît **qu'une seule fois** dans `index.html`. Pour chaque photo :
+
+1. Déposer le fichier dans le bon sous-dossier de `images/`
+2. Rechercher le nom du `PLACEHOLDER-…svg` dans `index.html` (une seule occurrence) et
+   le remplacer par le nouveau nom
+3. Adapter l'attribut `alt` si le sujet change
+4. Supprimer le SVG d'attente
+
+Le tableau des emplacements et des formats attendus est dans
+[`docs/CREDITS.md`](docs/CREDITS.md) § 1.
 
 ### Recommandations
 
-| Emplacement | Format conseillé | Dimensions | Poids visé |
-|---|---|---|---|
-| Hero (en-tête) | JPG ou WebP | 2000 × 1300 px | < 350 Ko |
-| Cartes « publics » | JPG ou WebP | 1200 × 1500 px | < 200 Ko |
-| Galerie | JPG ou WebP | 1200 × 900 px | < 180 Ko |
-| Plats | JPG ou WebP | 800 × 800 px | < 120 Ko |
-| Logo | SVG (idéalement) ou PNG transparent | — | — |
-
 Pour compresser sans perte visible : [squoosh.app](https://squoosh.app) (gratuit, dans
-le navigateur, rien à installer).
+le navigateur, rien à installer). Une photo sortie du téléphone pèse 4 Mo et fait
+s'effondrer le temps de chargement en 4G : viser moins de 350 Ko pour l'image
+d'accueil, moins de 200 Ko pour les autres.
 
 ⚠️ **Penser au texte alternatif.** Chaque `<img>` a un attribut `alt` qui décrit
 l'image. Il sert aux personnes malvoyantes **et** au référencement. Si la photo change
 de sujet, mettre à jour le `alt`.
+
+⚠️ **Penser aussi à `og:image`**, en haut de `index.html` : c'est la vignette affichée
+quand le lien est partagé sur WhatsApp ou Facebook. Elle pointe aujourd'hui vers le
+visuel d'attente.
 
 ### Le logo
 
@@ -319,8 +334,38 @@ traceur. C'est aussi ce qui permet de se passer de bandeau de consentement.
 
 ---
 
+## Contrôle qualité
+
+Le site a été vérifié sur rendu réel (Chromium, captures desktop 1440×900,
+tablette 820×1180 et mobile 390×844) et non sur relecture de code :
+
+- aucun débordement horizontal sur les trois formats
+- aucune image cassée, tous les `alt` renseignés
+- un seul `<h1>`, aucun titre vide
+- toutes les cibles tactiles ≥ 40 px de haut
+- aucune erreur JavaScript, aucune requête en échec
+- HTML valide (`npx html-validate maitai/index.html`, configuration à la racine)
+
+Pour rejouer la validation HTML :
+
+```bash
+npx html-validate maitai/index.html
+```
+
+---
+
 ## Ce qui reste à valider
 
 Voir [`docs/SOURCES.md`](docs/SOURCES.md) : ce fichier liste, information par
 information, la source qui la confirme — et surtout **celles qui n'ont pas pu être
-vérifiées** et attendent une confirmation du restaurant avant mise en ligne publique.
+vérifiées**.
+
+Trois points méritent votre attention immédiate :
+
+1. **L'entrée du parc est-elle offerte aux clients du restaurant ?** Un avis client
+   l'affirme, aucune source officielle ne le confirme. Si c'est vrai, c'est l'argument
+   le plus fort du site et il n'y figure pas.
+2. **Y a-t-il une formule du midi ?** Les prix relevés (21–32 €) sont ceux d'une carte
+   de restaurant, pas d'un déjeuner rapide.
+3. **La fiche Tripadvisor géolocalise le restaurant près de Saint-Leu**, à une dizaine
+   de kilomètres de la réalité. À corriger chez eux.

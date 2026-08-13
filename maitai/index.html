@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17281D">
 
-<title>Le Maï-Taï by Croc Parc — Restaurant en pleine forêt à l'Étang-Salé (La Réunion)</title>
-<meta name="description" content="Déjeunez en pleine forêt de l'Étang-Salé, au cœur du Croc Parc. Cuisine du monde à l'ardoise, terrasse sous les filaos, jeux pour les enfants. Ouvert du mardi au dimanche, 11h30-14h. Réservation au 0692 39 42 00.">
+<title>Le Maï-Taï by Croc Parc — Restaurant en forêt à l'Étang-Salé</title>
+<meta name="description" content="Déjeunez sous la varangue, en pleine forêt de l'Étang-Salé, au cœur du Croc Parc. Suggestions renouvelées chaque semaine, jeux pour les enfants, parking privatif. Mardi au dimanche, 11h30-14h. Réservation au 0692 39 42 00.">
 
 <link rel="canonical" href="https://assocollectifensemble-sys.github.io/Croc-parc/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -17,10 +17,10 @@
 <meta property="og:locale" content="fr_RE">
 <meta property="og:site_name" content="Le Maï-Taï by Croc Parc">
 <meta property="og:title" content="Le Maï-Taï by Croc Parc — déjeuner en pleine forêt à l'Étang-Salé">
-<meta property="og:description" content="Cuisine du monde à l'ardoise, terrasse sous les filaos, jeux pour les enfants et les animaux du parc à deux pas. Réservation au 0692 39 42 00.">
+<meta property="og:description" content="Sous la varangue ou côté jardin, dans un écrin de verdure. Suggestions renouvelées chaque semaine, jeux pour les enfants. Réservation au 0692 39 42 00.">
 <meta property="og:url" content="https://assocollectifensemble-sys.github.io/Croc-parc/">
-<meta property="og:image" content="https://assocollectifensemble-sys.github.io/Croc-parc/images/hero/terrasse-foret.jpg">
-<meta property="og:image:alt" content="La terrasse du restaurant Le Maï-Taï sous les arbres de la forêt de l'Étang-Salé.">
+<meta property="og:image" content="https://assocollectifensemble-sys.github.io/Croc-parc/images/hero/PLACEHOLDER-terrasse-foret.svg">
+<meta property="og:image:alt" content="La varangue du restaurant Le Maï-Taï, dans la forêt de l'Étang-Salé.">
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- Polices auto-hébergées : aucun appel à un serveur tiers (voir css/fonts.css) -->
@@ -69,7 +69,7 @@
     <div class="entete__actions">
       <a class="btn entete__tel" href="tel:0692394200" data-origine-appel="entete">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        <span>0692 39 42 00</span>
+        <span>0692&nbsp;39&nbsp;42&nbsp;00</span>
       </a>
 
       <button class="burger" type="button" data-burger
@@ -85,7 +85,9 @@
 </header>
 
 <!-- Navigation plein écran (mobile) -->
-<div class="nav-mobile" id="nav-mobile" data-nav-mobile aria-hidden="true">
+<!-- `inert` (plutôt que aria-hidden) : tant que le menu est fermé, ses liens
+     sortent du parcours de tabulation ET de l'arbre d'accessibilité. -->
+<div class="nav-mobile" id="nav-mobile" data-nav-mobile inert>
   <nav class="conteneur" aria-label="Navigation mobile">
     <ul class="nav-mobile__liste">
       <li><a class="nav-mobile__lien" href="#lelieu"><span>01</span>Le lieu</a></li>
@@ -98,7 +100,7 @@
     </ul>
     <p class="nav-mobile__pied">
       Réservation par téléphone&nbsp;:<br>
-      <a href="tel:0692394200" data-origine-appel="menu-mobile"><strong>0692 39 42 00</strong></a><br>
+      <a href="tel:0692394200" data-origine-appel="menu-mobile"><strong>0692&nbsp;39&nbsp;42&nbsp;00</strong></a><br>
       Mardi&nbsp;→&nbsp;dimanche, service du midi&nbsp;11h30&nbsp;–&nbsp;14h
     </p>
   </nav>
@@ -112,9 +114,9 @@
   <section class="hero" id="accueil" data-hero>
 
     <div class="hero__media" data-parallaxe>
-      <img src="images/hero/terrasse-foret.jpg"
-           alt="La terrasse du restaurant Le Maï-Taï, installée sous les grands arbres de la forêt de l'Étang-Salé."
-           width="2000" height="1300" fetchpriority="high" decoding="async">
+      <img src="images/hero/PLACEHOLDER-terrasse-foret.svg"
+           alt="La varangue du restaurant Le Maï-Taï, installée dans la verdure de la forêt de l'Étang-Salé."
+           width="1600" height="1040" fetchpriority="high" decoding="async">
     </div>
     <div class="hero__voile"></div>
 
@@ -140,9 +142,10 @@
       </h1>
 
       <p class="hero__accroche">
-        Une table à l'ombre des filaos, une cuisine du monde qui change chaque semaine,
-        et les enfants qui jouent à portée de regard. À midi en semaine comme en sortie
-        du week-end, le Maï-Taï c'est la pause qu'on n'a pas envie d'écourter.
+        Sous la varangue ou côté jardin, dans un écrin de verdure. Des suggestions qui
+        changent chaque semaine, et les enfants qui jouent à portée de regard. À midi en
+        semaine comme en sortie du week-end, le Maï-Taï c'est la pause qu'on n'a pas
+        envie d'écourter.
       </p>
 
       <div class="groupe-btn">
@@ -156,15 +159,15 @@
       <ul class="hero__reassurance">
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-          Terrasse en pleine nature
+          Varangue &amp; côté jardin
         </li>
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-          Jeux et animations pour les enfants
+          Gonflables, mini-golf, aire de jeux
         </li>
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-          Parking sur place
+          Parking privatif gratuit
         </li>
       </ul>
 
@@ -207,7 +210,7 @@
             <p class="bandeau-infos__label">Où nous trouver</p>
             <p class="bandeau-infos__valeur">
               <b>1 route forestière</b><br>
-              <span class="bandeau-infos__note">Forêt de l'Étang-Salé, 97427 — entrée 2 du Croc Parc</span>
+              <span class="bandeau-infos__note">Forêt de l'Étang-Salé, 97427 — portail privatif du restaurant</span>
             </p>
           </div>
         </div>
@@ -219,7 +222,7 @@
           <div>
             <p class="bandeau-infos__label">Réservation</p>
             <p class="bandeau-infos__valeur">
-              <a href="tel:0692394200" data-origine-appel="bandeau"><b>0692 39 42 00</b></a><br>
+              <a href="tel:0692394200" data-origine-appel="bandeau"><b>0692&nbsp;39&nbsp;42&nbsp;00</b></a><br>
               <span class="bandeau-infos__note">Par téléphone uniquement — on vous répond avec plaisir</span>
             </p>
           </div>
@@ -237,41 +240,44 @@
       <div class="histoire__grille">
 
         <div class="histoire__media" data-anim="gauche">
-          <img src="images/nature/foret-filaos-etang-sale.jpg"
+          <img src="images/nature/PLACEHOLDER-foret-filaos.svg"
                alt="La forêt domaniale de l'Étang-Salé, ses filaos et ses allées ombragées, autour du restaurant."
-               width="1200" height="1500" loading="lazy" decoding="async">
+               width="1000" height="1250" loading="lazy" decoding="async">
           <div class="histoire__vignette">
-            <img src="images/nature/animal-croc-parc.jpg"
+            <img src="images/nature/PLACEHOLDER-animal-parc.svg"
                  alt="Un des animaux du Croc Parc, le parc animalier qui entoure le restaurant."
-                 width="600" height="600" loading="lazy" decoding="async">
+                 width="700" height="700" loading="lazy" decoding="async">
           </div>
         </div>
 
         <div data-anim>
           <p class="surtitre">Le lieu</p>
-          <h2>Une clairière posée dans 1&nbsp;000&nbsp;hectares de forêt</h2>
+          <h2>Un écrin de verdure, et un parc tout autour</h2>
           <p class="chapo">
-            Le Maï-Taï n'est pas un restaurant avec vue sur la nature&nbsp;: il est
-            <strong>dedans</strong>. La forêt domaniale de l'Étang-Salé, gérée par l'ONF,
-            déroule ses filaos, ses tamarins des Indes et ses flamboyants tout autour de
-            la terrasse. L'air y est plus frais qu'en bord de mer, la lumière filtre à
-            travers les branches, et le bruit de fond, c'est le vent dans les aiguilles.
+            «&nbsp;Dans la forêt d'Étang-Salé, dans un écrin de verdure, venez passer un
+            moment agréable sous notre varangue ou côté jardin.&nbsp;» Le Maï-Taï n'est pas
+            un restaurant avec vue sur la nature&nbsp;: il est <strong>dedans</strong>.
+            Autour, la forêt domaniale de l'Étang-Salé déroule ses filaos et ses tamarins
+            des Indes. L'air y est plus frais qu'en bord de mer, et le bruit de fond,
+            c'est le vent dans les aiguilles.
           </p>
           <p class="chapo">
-            À quelques pas, le Croc Parc et ses 4,7&nbsp;hectares&nbsp;: crocodiles du Nil,
-            lémuriens, tortues étoilées, paons en liberté. Les enfants ont de quoi faire
-            avant, pendant et après le repas. Les parents, eux, ont enfin le droit de
-            finir leur assiette tranquillement.
+            Le restaurant est installé dans le Croc Parc, créé en 1999 et déployé sur
+            4,7&nbsp;hectares de forêt protégée&nbsp;: crocodiles du Nil, makis catta,
+            paons bleus, tortues étoilées, mini-ferme. Juste à côté, une grande esplanade
+            avec mini-golf, châteaux gonflables et aire de jeux. Les enfants ont de quoi
+            faire avant, pendant et après le repas. Les parents, eux, ont enfin le droit
+            de finir leur assiette tranquillement.
           </p>
 
           <dl class="chiffres">
             <div class="chiffre">
-              <dd class="chiffre__valeur">1&nbsp;000&nbsp;ha</dd>
-              <dt class="chiffre__label">de forêt domaniale autour de nous</dt>
+              <dd class="chiffre__valeur">1999</dd>
+              <dt class="chiffre__label">l'année où tout a commencé</dt>
             </div>
             <div class="chiffre">
               <dd class="chiffre__valeur">4,7&nbsp;ha</dd>
-              <dt class="chiffre__label">de parc animalier à deux pas</dt>
+              <dt class="chiffre__label">de parc en forêt protégée</dt>
             </div>
             <div class="chiffre">
               <dd class="chiffre__valeur">6&nbsp;j/7</dd>
@@ -298,9 +304,9 @@
         <p class="surtitre">Deux façons de venir</p>
         <h2>La même forêt, deux rythmes</h2>
         <p class="chapo">
-          En semaine, on vient pour souffler une heure. Le week-end et pendant les
-          vacances, on vient pour y passer la journée. Le Maï-Taï fait les deux — mais
-          pas de la même manière.
+          En semaine, on vient pour souffler une heure — et il y a même un portail rien
+          que pour ça. Le week-end et pendant les vacances, on vient pour y passer la
+          journée. Le Maï-Taï fait les deux, mais pas de la même manière.
         </p>
       </div>
 
@@ -309,30 +315,31 @@
         <!-- Public A : les actifs, en semaine -->
         <article class="carte-public carte-public--midi" data-anim="zoom">
           <div class="carte-public__media">
-            <img src="images/famille/pause-dejeuner-terrasse.jpg"
-                 alt="Tables dressées sur la terrasse ombragée du Maï-Taï, pour la pause déjeuner en semaine."
-                 width="1200" height="1500" loading="lazy" decoding="async">
+            <img src="images/famille/PLACEHOLDER-pause-dejeuner.svg"
+                 alt="Une table dressée sous la varangue du Maï-Taï, pour la pause déjeuner en semaine."
+                 width="1000" height="1250" loading="lazy" decoding="async">
           </div>
           <p class="carte-public__etiquette">Du mardi au vendredi</p>
           <div class="carte-public__corps">
             <h3>La pause déjeuner qui change tout</h3>
             <p>
-              Quinze minutes de route depuis les zones d'activité du sud, et vous
-              déjeunez sous les arbres. Pas de klaxon, pas de béton&nbsp;: on se gare, on
-              s'installe, on repart la tête reposée.
+              Pressé&nbsp;? Un <strong>portail privatif</strong>, à 300&nbsp;mètres de
+              l'entrée principale en direction du Golf Bourbon, vous amène directement au
+              restaurant. On se gare à côté, on déjeune sous les arbres, on repart la tête
+              reposée.
             </p>
             <ul class="carte-public__liste">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                Accès direct par le portail privatif du restaurant
+              </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                 Service du midi de 11h30 à 14h
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Suggestions renouvelées chaque semaine
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Parking sur place, accès direct par l'entrée 2
+                Des suggestions renouvelées chaque semaine
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
@@ -349,34 +356,34 @@
         <!-- Public B : les familles, week-end & vacances -->
         <article class="carte-public carte-public--famille" data-anim="zoom">
           <div class="carte-public__media">
-            <img src="images/famille/enfants-jeux-gonflables.jpg"
-                 alt="Enfants jouant sur les structures gonflables et l'aire de jeux du Croc Parc, à côté du restaurant."
-                 width="1200" height="1500" loading="lazy" decoding="async">
+            <img src="images/famille/PLACEHOLDER-jeux-enfants.svg"
+                 alt="L'esplanade de jeux du Croc Parc, avec ses châteaux gonflables et son mini-golf, à côté du restaurant."
+                 width="1000" height="1250" loading="lazy" decoding="async">
           </div>
           <p class="carte-public__etiquette">Week-end &amp; vacances scolaires</p>
           <div class="carte-public__corps">
             <h3>La sortie dont ils reparleront lundi</h3>
             <p>
-              Les crocodiles le matin, le repas à l'ombre, les jeux gonflables l'après-midi.
-              Une seule adresse, une journée entière, et personne ne demande
+              Les crocodiles le matin, le repas à l'ombre, les gonflables et le mini-golf
+              l'après-midi. Une seule adresse, une journée entière, et personne ne demande
               «&nbsp;on fait quoi maintenant&nbsp;?&nbsp;».
             </p>
             <ul class="carte-public__liste">
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Jeux gonflables, balançoires et aire de jeux
+                Châteaux gonflables, mini-golf et aire de jeux
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Crocodiles, lémuriens et tortues à deux pas
+                Crocodiles, makis catta, tortues et mini-ferme
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Espace clos et ombragé, les petits restent en vue
+                Un espace vert pour enfants, «&nbsp;agréable et sécurisé&nbsp;»
               </li>
               <li>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                Ouvert 7j/7 pendant les vacances scolaires
+                Anniversaires d'enfants organisés sur place
               </li>
             </ul>
             <a class="btn" href="tel:0692394200" data-origine-appel="carte-famille">
@@ -400,21 +407,49 @@
         <p class="surtitre">À table</p>
         <h2>Une ardoise qui change toutes les semaines</h2>
         <p class="chapo">
-          Pas de carte figée&nbsp;: le chef compose ses suggestions au fil des arrivages
-          et de l'inspiration. Une cuisine du monde, servie dans un cadre qui ne
-          ressemble à aucun autre restaurant de l'île.
+          Pas de carte figée&nbsp;: les suggestions se renouvellent au fil des semaines et
+          de l'inspiration du chef. La carte de la semaine est publiée sur nos réseaux
+          sociaux — et un coup de fil suffit pour savoir ce qu'il y a aujourd'hui.
         </p>
       </div>
 
-      <div class="carte-resto" data-anim style="margin-top: var(--e-6);">
+      <div class="carte-resto" data-anim>
 
         <div class="ardoise">
-          <p class="ardoise__titre">Les suggestions de la semaine</p>
+          <p class="ardoise__titre">Un aperçu de la carte</p>
+
+          <ul class="ardoise__plats">
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Salade César au poulet croustillant</span><b>21&nbsp;€</b></p>
+              <p class="ardoise__detail">Lardon de porc, tomates, œuf, croûtons, croûtes, sauce anchois</p>
+            </li>
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Salade italienne</span><b>22&nbsp;€</b></p>
+              <p class="ardoise__detail">Jambon Serrano, burrata crémeuse, courgettes grillées, olives, tomate</p>
+            </li>
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Duo de foie gras maison</span><b>32&nbsp;€</b></p>
+              <p class="ardoise__detail">Maïs et piment d'Espelette, compote d'oignon et sa brioche</p>
+            </li>
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Risotto snacké en persillade</span><b>25&nbsp;€</b></p>
+              <p class="ardoise__detail">Risotto crémeux, parmesan</p>
+            </li>
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Mahi-mahi grillé</span><b>26&nbsp;€</b></p>
+              <p class="ardoise__detail">Daurade blanche à la passion, riz façon pilaf, légumes rôtis</p>
+            </li>
+            <li class="ardoise__plat">
+              <p class="ardoise__nom"><span>Crème brûlée maison à la vanille de Madagascar</span><b>10&nbsp;€</b></p>
+            </li>
+          </ul>
+
           <p class="ardoise__note">
-            La carte est publiée chaque semaine sur nos réseaux sociaux.<br>
+            Ces plats donnent le ton, mais la carte évolue chaque semaine.<br>
             Appelez-nous, on vous dit ce qu'il y a aujourd'hui&nbsp;!
           </p>
-          <div class="groupe-btn" style="justify-content:center;">
+
+          <div class="groupe-btn">
             <a class="btn" href="tel:0692394200" data-origine-appel="carte-ardoise">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               Demander la carte du jour
@@ -422,10 +457,16 @@
           </div>
         </div>
 
+        <p class="carte-resto__mention">
+          Envie de manger sur le pouce&nbsp;? Le <strong>Croc'Snack</strong> du parc sert
+          burgers, sandwichs, salades, samoussas, glaces et gaufres toute la journée. Et
+          le pique-nique est autorisé, avec des kiosques ombragés à disposition.
+        </p>
+
         <!-- POINT D'EXTENSION 2 : carte PDF téléchargeable (voir README) -->
         <div class="bloc-extension">
           <p>
-            <strong>Bientôt&nbsp;:</strong> la carte à emporter en PDF, pour la consulter
+            <strong>Bientôt&nbsp;:</strong> la carte complète en PDF, pour la consulter
             tranquillement avant de venir.
           </p>
           <a class="btn btn--fantome" href="#" aria-disabled="true" data-bouton-carte-pdf>
@@ -447,14 +488,42 @@
         <p class="surtitre">En images</p>
         <h2>Le Maï-Taï, pour de vrai</h2>
         <p class="chapo">
-          La terrasse, les assiettes, les enfants qui courent, les animaux du parc.
-          Ce que vous voyez ici, c'est ce que vous trouverez en arrivant.
+          La varangue, les assiettes, les enfants qui courent, les animaux du parc.
+          Six fenêtres sur une journée au Maï-Taï.
         </p>
       </div>
 
       <div class="galerie" data-anim>
-        <!-- Les 8 emplacements de la galerie. Voir README § « Remplacer les images ». -->
+        <figure class="galerie__item galerie__item--large">
+          <img src="images/galerie/PLACEHOLDER-01-varangue.svg" alt="La varangue du restaurant Le Maï-Taï." width="1200" height="800" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">La varangue</figcaption>
+        </figure>
+        <figure class="galerie__item galerie__item--haut">
+          <img src="images/galerie/PLACEHOLDER-02-plat.svg" alt="Un plat de la carte du Maï-Taï." width="800" height="1000" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">Dans les assiettes</figcaption>
+        </figure>
+        <figure class="galerie__item">
+          <img src="images/galerie/PLACEHOLDER-03-jardin.svg" alt="Les tables installées côté jardin." width="800" height="600" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">Côté jardin</figcaption>
+        </figure>
+        <figure class="galerie__item">
+          <img src="images/galerie/PLACEHOLDER-04-kiosques.svg" alt="Les kiosques ombragés de l'espace pique-nique du Croc Parc." width="800" height="600" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">Les kiosques ombragés</figcaption>
+        </figure>
+        <figure class="galerie__item">
+          <img src="images/galerie/PLACEHOLDER-05-enfants.svg" alt="L'esplanade des jeux : gonflables, mini-golf et aire de jeux." width="800" height="600" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">L'esplanade des jeux</figcaption>
+        </figure>
+        <figure class="galerie__item">
+          <img src="images/galerie/PLACEHOLDER-06-animaux.svg" alt="Les animaux du Croc Parc : crocodiles, makis catta, tortues." width="800" height="600" loading="lazy" decoding="async">
+          <figcaption class="galerie__legende">Les voisins</figcaption>
+        </figure>
       </div>
+
+      <p class="galerie__avertissement" data-anim>
+        <strong>Visuels d'attente.</strong> Les photos définitives du restaurant seront
+        mises en ligne prochainement. Voir <code>docs/CREDITS.md</code> pour le détail.
+      </p>
     </div>
   </section>
 
@@ -466,10 +535,55 @@
       <div data-anim>
         <p class="surtitre">Ce qu'on en dit</p>
         <h2>Les mots de ceux qui sont déjà venus</h2>
+        <p class="chapo">
+          Le restaurant est jeune&nbsp;: les avis qui le concernent se comptent encore sur
+          les doigts d'une main. Les voici, tels quels, sans retouche.
+        </p>
       </div>
+
       <div class="avis-piste" data-anim>
-        <!-- Avis clients réels — voir docs/SOURCES.md -->
+
+        <blockquote class="avis avis--phare">
+          <p class="avis__texte">Le Maï-Taï Restaurant dans le Croc Park à Étang Salé : 👍😋 une petite pose tranquille 🙏 en semaine dans un cadre nature. Équipe agréable et le goût 🤌🤌🤌 au top !!! […]</p>
+          <footer class="avis__pied">
+            <span class="avis__auteur">Compass00450009459</span> · Tripadvisor
+          </footer>
+        </blockquote>
+
+        <blockquote class="avis">
+          <p class="avis__texte">très belle journée en famille, cadre agréable et très bon restaurant. a conseiller</p>
+          <footer class="avis__pied">
+            <span class="avis__auteur">Boris Wattier</span> · Google
+          </footer>
+        </blockquote>
+
+        <blockquote class="avis">
+          <p class="avis__texte">L'équipe est très sympathique, les activités sont bien pensées, les enfants ont de quoi jouer et s'amuser. Les animaux sont très bien traités […] Je recommande sans hésiter !</p>
+          <footer class="avis__pied">
+            <span class="avis__auteur">Avis anonyme</span> · Google · <em>à propos du parc</em>
+          </footer>
+        </blockquote>
+
+        <blockquote class="avis">
+          <p class="avis__texte">Les enfants ont adoré leur après-midi ; les ateliers avec les animaux étaient géniaux ! L'animatrice Aurore a été ultra compétente et très à l'écoute des enfants ! Merci pour ce bon moment :) Nous reviendrons !</p>
+          <footer class="avis__pied">
+            <span class="avis__auteur">Dorothée T</span> · Tripadvisor · <em>à propos du parc</em>
+          </footer>
+        </blockquote>
+
+        <blockquote class="avis">
+          <p class="avis__texte">Pas le temps de s'ennuyer ! La journée a été variée et enrichissante : brossage des minis chèvres et tortues, nourrissage des crocodiles, structures gonflables… Les enfants se sont bien amusés. Pas de doute… nous reviendrons très bientôt !</p>
+          <footer class="avis__pied">
+            <span class="avis__auteur">Coraly M</span> · Tripadvisor · <em>à propos du parc</em>
+          </footer>
+        </blockquote>
+
       </div>
+
+      <p class="avis__note" data-anim>
+        Vous êtes déjà venu déjeuner&nbsp;?
+        <a href="https://www.tripadvisor.fr/Restaurant_Review-g1222145-d34146489-Reviews-Restaurant_le_mai_tai_by_croc_parc-L_Etang_Sale_Arrondissement_of_Saint_Pierre.html" target="_blank" rel="noopener">Laissez-nous un avis</a>, ça aide beaucoup.
+      </p>
     </div>
   </section>
 
@@ -483,7 +597,7 @@
         <h2>À quinze minutes de tout, à mille lieues de tout</h2>
       </div>
 
-      <div class="acces__grille" style="margin-top: var(--e-7);">
+      <div class="acces__grille">
 
         <div class="acces__carte" data-anim="gauche">
           <iframe
@@ -499,8 +613,16 @@
               <dt>Adresse</dt>
               <dd>
                 1 route forestière — forêt de l'Étang-Salé<br>
-                97427 L'Étang-Salé, La Réunion<br>
-                <em>Entrée 2 du Croc Parc</em>
+                97427 L'Étang-Salé, La Réunion
+              </dd>
+            </div>
+
+            <div class="acces__ligne">
+              <dt>Le raccourci</dt>
+              <dd>
+                Un <strong>portail privatif</strong> se trouve à 300&nbsp;m de l'entrée
+                principale, en direction du <strong>Golf Bourbon</strong>. Il permet de se
+                garer au plus près quand on vient uniquement déjeuner.
               </dd>
             </div>
 
@@ -514,21 +636,27 @@
             </div>
 
             <div class="acces__ligne">
+              <dt>Sur place</dt>
+              <dd>
+                Parking privatif gratuit · Accessible PMR et poussettes<br>
+                Cartes bancaires acceptées (Visa, Mastercard, American Express)
+              </dd>
+            </div>
+
+            <div class="acces__ligne">
               <dt>Réservation</dt>
               <dd>
-                <a href="tel:0692394200" data-origine-appel="acces"><strong>0692 39 42 00</strong></a><br>
-                Par téléphone — c'est le plus rapide et on répond à toutes vos questions
+                <a href="tel:0692394200" data-origine-appel="acces"><strong>0692&nbsp;39&nbsp;42&nbsp;00</strong></a><br>
+                <a href="mailto:maitaicrocparc@gmail.com">maitaicrocparc@gmail.com</a>
               </dd>
             </div>
 
             <div class="acces__ligne">
               <dt>Compter</dt>
               <dd>
-                <ul>
-                  <li>≈ 10 min depuis l'Étang-Salé-les-Bains</li>
-                  <li>≈ 15 min depuis Les Avirons ou Saint-Louis</li>
-                  <li>≈ 25 min depuis Saint-Pierre</li>
-                </ul>
+                ≈ 10 min depuis l'Étang-Salé-les-Bains<br>
+                ≈ 15 min depuis Les Avirons ou Saint-Louis<br>
+                ≈ 25 min depuis Saint-Pierre<br>
                 <em>Temps indicatifs, hors heures de pointe.</em>
               </dd>
             </div>
@@ -553,21 +681,21 @@
   <!-- ================================================================== -->
   <section class="section appel-final" id="reserver">
     <div class="appel-final__media">
-      <img src="images/hero/appel-final.jpg"
+      <img src="images/hero/PLACEHOLDER-appel-final.svg"
            alt="" aria-hidden="true"
-           width="2000" height="1200" loading="lazy" decoding="async">
+           width="1600" height="900" loading="lazy" decoding="async">
     </div>
 
     <div class="conteneur conteneur--etroit" data-anim>
-      <p class="surtitre" style="justify-content:center;">Réserver</p>
+      <p class="surtitre">Réserver</p>
       <h2>Votre table en un appel</h2>
       <p class="chapo">
         La réservation se fait <strong>par téléphone</strong>, tout simplement. On note
         votre nom, le nombre de couverts, et on vous garde la table qui vous ira le
-        mieux — à l'ombre, près des jeux, ou au calme.
+        mieux — sous la varangue, côté jardin, ou près des jeux.
       </p>
 
-      <a class="numero-geant" href="tel:0692394200" data-origine-appel="appel-final">0692 39 42 00</a>
+      <a class="numero-geant" href="tel:0692394200" data-origine-appel="appel-final">0692&nbsp;39&nbsp;42&nbsp;00</a>
 
       <div class="groupe-btn">
         <a class="btn btn--large btn--appel" href="tel:0692394200" data-origine-appel="appel-final-bouton">
@@ -576,7 +704,7 @@
         </a>
       </div>
 
-      <p class="chapo" style="margin-inline:auto; font-size:var(--t-sm);">
+      <p class="chapo note-reservation">
         La réservation en ligne arrive prochainement. En attendant, un appel suffit —
         et c'est souvent plus rapide.
       </p>
@@ -593,20 +721,24 @@
     <div class="pied__grille">
 
       <div>
-        <a class="logo" href="#accueil" style="margin-bottom: var(--e-4)">
+        <a class="logo" href="#accueil">
           <img src="images/logo/logo-maitai-provisoire.svg" width="48" height="48" alt="" aria-hidden="true">
           <span class="logo__texte">
-            <span class="logo__nom" style="color:var(--creme)">Le Maï-Taï</span>
+            <span class="logo__nom">Le Maï-Taï</span>
             <span class="logo__lieu">by Croc Parc</span>
           </span>
         </a>
         <p>
-          Le restaurant du Croc Parc, en pleine forêt domaniale de l'Étang-Salé.
-          Cuisine du monde, terrasse à l'ombre, et des enfants qui ne s'ennuient jamais.
+          Le restaurant du Croc Parc, dans la forêt de l'Étang-Salé. Sous la varangue ou
+          côté jardin, une carte qui change chaque semaine et des enfants qui ne
+          s'ennuient jamais.
         </p>
         <div class="reseaux">
           <a href="https://www.facebook.com/profile.php?id=61565124304200" target="_blank" rel="noopener" aria-label="La page Facebook du restaurant Le Maï-Taï">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/crocparc/" target="_blank" rel="noopener" aria-label="Le compte Instagram du Croc Parc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
           </a>
           <a href="https://croc-parc.re/" target="_blank" rel="noopener" aria-label="Le site du Croc Parc">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.8 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.8-3.8-9S9.5 5.7 12 3z"/></svg>
@@ -620,10 +752,11 @@
           <li>1 route forestière</li>
           <li>Forêt de l'Étang-Salé</li>
           <li>97427 L'Étang-Salé, La Réunion</li>
-          <li>Entrée 2 du Croc Parc</li>
-          <li style="margin-top:var(--e-3)">
-            <a href="tel:0692394200" data-origine-appel="pied"><strong>0692 39 42 00</strong></a>
+          <li>Portail privatif direction Golf Bourbon</li>
+          <li class="decale">
+            <a href="tel:0692394200" data-origine-appel="pied"><strong>0692&nbsp;39&nbsp;42&nbsp;00</strong></a>
           </li>
+          <li><a href="mailto:maitaicrocparc@gmail.com">maitaicrocparc@gmail.com</a></li>
         </ul>
       </div>
 
@@ -633,9 +766,7 @@
           <li>Mardi → dimanche</li>
           <li>11h30 – 14h (midi uniquement)</li>
           <li>7j/7 en vacances scolaires</li>
-          <li style="margin-top:var(--e-3)">
-            <a href="#reserver">Réserver une table</a>
-          </li>
+          <li class="decale"><a href="#reserver">Réserver une table</a></li>
           <li><a href="#carte">La carte de la semaine</a></li>
           <li><a href="#acces">Comment venir</a></li>
         </ul>
@@ -645,7 +776,7 @@
 
     <div class="pied__bas">
       <p>© <span data-annee>2026</span> Le Maï-Taï by Croc Parc — Tous droits réservés.</p>
-      <p>Réservation par téléphone au <a href="tel:0692394200" data-origine-appel="pied-bas">0692 39 42 00</a></p>
+      <p>Réservation par téléphone au <a href="tel:0692394200" data-origine-appel="pied-bas">0692&nbsp;39&nbsp;42&nbsp;00</a></p>
     </div>
   </div>
 </footer>
@@ -660,7 +791,7 @@
   </a>
   <a class="barre-appel__item barre-appel__item--appel" href="tel:0692394200" data-origine-appel="barre-mobile">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    <strong>Réserver au 0692 39 42 00</strong>
+    <strong>Réserver au 0692&nbsp;39&nbsp;42&nbsp;00</strong>
   </a>
 </div>
 
@@ -672,11 +803,14 @@
   "@context": "https://schema.org",
   "@type": "Restaurant",
   "name": "Le Maï-Taï by Croc Parc",
-  "alternateName": ["Restaurant Le Maï-Taï", "Maï-Taï Croc Parc"],
-  "description": "Restaurant en pleine forêt domaniale de l'Étang-Salé, à l'intérieur du parc animalier Croc Parc. Cuisine du monde à l'ardoise, terrasse ombragée, jeux pour les enfants. Service du midi.",
+  "alternateName": ["Restaurant Le Maï-Taï", "Maï-Taï Croc Parc", "Restaurant le maï taï by croc parc"],
+  "description": "Restaurant dans la forêt de l'Étang-Salé, au cœur du parc animalier Croc Parc. Repas sous la varangue ou côté jardin, suggestions renouvelées chaque semaine. Service du midi, du mardi au dimanche.",
   "url": "https://assocollectifensemble-sys.github.io/Croc-parc/",
   "telephone": "+262692394200",
-  "servesCuisine": ["Cuisine du monde"],
+  "email": "maitaicrocparc@gmail.com",
+  "servesCuisine": ["Française", "Européenne"],
+  "priceRange": "€€-€€€",
+  "paymentAccepted": "Visa, Mastercard, American Express",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "1 route forestière, forêt de l'Étang-Salé",
@@ -700,7 +834,8 @@
   "amenityFeature": [
     { "@type": "LocationFeatureSpecification", "name": "Aire de jeux pour enfants", "value": true },
     { "@type": "LocationFeatureSpecification", "name": "Terrasse", "value": true },
-    { "@type": "LocationFeatureSpecification", "name": "Parking", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "Parking privatif gratuit", "value": true },
+    { "@type": "LocationFeatureSpecification", "name": "Accessible aux personnes à mobilité réduite", "value": true },
     { "@type": "LocationFeatureSpecification", "name": "Adapté aux familles", "value": true }
   ],
   "containedInPlace": {
@@ -710,6 +845,7 @@
   },
   "sameAs": [
     "https://www.facebook.com/profile.php?id=61565124304200",
+    "https://croc-parc.re/la-restauration/",
     "https://www.tripadvisor.fr/Restaurant_Review-g1222145-d34146489-Reviews-Restaurant_le_mai_tai_by_croc_parc-L_Etang_Sale_Arrondissement_of_Saint_Pierre.html"
   ]
 }
