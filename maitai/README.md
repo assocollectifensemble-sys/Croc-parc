@@ -109,17 +109,28 @@ Un workflow GitHub Actions est déjà fourni :
 `.github/workflows/deploy-maitai.yml`. Il publie **uniquement le dossier `maitai/`** —
 le reste du dépôt n'est jamais exposé.
 
-**À faire une seule fois :**
+### ⚠️ Une action manuelle est requise, une seule fois
 
-1. Dans le dépôt GitHub → **Settings** → **Pages**
+1. Dépôt GitHub → **Settings** → **Pages**
 2. **Build and deployment** → **Source** → choisir **GitHub Actions**
-3. Fusionner cette branche dans `main`
+3. Onglet **Actions** → *Déployer le site Maï-Taï sur GitHub Pages* → **Run workflow**
 
-Chaque `push` sur `main` qui touche à `maitai/` redéploie automatiquement. Le site sera
-visible à l'adresse indiquée dans l'onglet Actions à la fin du déploiement.
+Cette étape ne peut pas être automatisée : le workflow tente bien d'activer Pages
+lui-même, mais GitHub refuse qu'un `GITHUB_TOKEN` de workflow **crée** un site Pages
+(*« Create Pages site failed. Error: Resource not accessible by integration »*). Il faut
+des droits d'administration sur le dépôt.
 
-> **Déploiement manuel :** onglet **Actions** → *Déployer le site Maï-Taï sur GitHub
-> Pages* → **Run workflow**.
+Une fois cette case cochée, plus rien à faire : chaque `push` touchant à `maitai/`
+redéploie automatiquement, et l'URL du site s'affiche à la fin du job dans l'onglet
+Actions.
+
+### La branche de déploiement
+
+Ce dépôt **n'a pas de branche `main`** : sa branche par défaut est
+`claude/skill-installation-1agmce`, nom hérité d'une session de travail précédente. Le
+workflow écoute les deux noms, donc tout fonctionne en l'état — mais renommer la
+branche par défaut en `main` (Settings → Branches) serait plus sain, et la ligne
+correspondante du workflow pourra alors disparaître.
 
 ### Alternative : Netlify / autre hébergeur
 

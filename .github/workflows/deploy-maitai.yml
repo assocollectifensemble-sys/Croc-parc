@@ -3,10 +3,18 @@ name: Déployer le site Maï-Taï sur GitHub Pages
 # Publie UNIQUEMENT le dossier /maitai sur GitHub Pages.
 # Le reste du dépôt (skills Claude Code, etc.) n'est jamais publié.
 #
-# Le job active GitHub Pages tout seul au premier passage (enablement: true) :
-# il n'y a normalement rien à faire dans les réglages du dépôt. Si l'activation
-# automatique est refusée par la politique de l'organisation, faire une fois :
+# ⚠️ UNE ACTION MANUELLE EST REQUISE, UNE SEULE FOIS :
 #   Settings → Pages → Build and deployment → Source : « GitHub Actions »
+#
+# Le job tente bien d'activer Pages tout seul (enablement: true), mais sur ce
+# dépôt GitHub le refuse : le GITHUB_TOKEN d'un workflow n'a pas le droit de
+# CRÉER un site Pages (« Create Pages site failed. Error: Resource not
+# accessible by integration »). Il faut des droits d'administration sur le
+# dépôt, que seul un humain possède ici.
+#
+# Une fois Pages activé, l'option enablement: true devient sans effet : l'action
+# constate que le site existe et poursuit. Il n'y a plus rien à faire ensuite,
+# chaque push redéploie automatiquement.
 
 on:
   push:
