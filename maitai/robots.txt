@@ -1,0 +1,7 @@
+# Le Maï-Taï by Croc Parc
+# Remplacer l'URL du sitemap le jour où le nom de domaine définitif est branché.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://assocollectifensemble-sys.github.io/Croc-parc/sitemap.xml

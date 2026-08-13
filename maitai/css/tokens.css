@@ -1,0 +1,119 @@
+/* ==========================================================================
+   LE MAÏ-TAÏ BY CROC PARC — DESIGN TOKENS
+   Direction artistique : « Petite jungle »
+   Ancrage local : forêt domaniale de l'Étang-Salé (filaos, ONF), sable noir
+   volcanique de la côte ouest, flamboyant en accent.
+   Aucun token n'est défini ailleurs : ce fichier est la source unique.
+   ========================================================================== */
+
+:root {
+  /* --- Sous-bois : la profondeur, l'ombre sous la canopée ---------------- */
+  --vert-abysse:      #0E1A13;  /* nuit en forêt — fonds les plus sombres  */
+  --vert-sousbois:    #17281D;  /* fond principal des sections sombres     */
+  --vert-canopee:     #22402E;  /* surfaces sombres surélevées             */
+  --vert-feuille:     #3B6B4A;  /* vert « signature » — traits, icônes     */
+  --vert-pousse:      #7FA86A;  /* jeune feuille — accents lumineux        */
+  --vert-lichen:      #C3D6B0;  /* texte secondaire sur fond sombre        */
+
+  /* --- Bois & terre : le bardage, les tables, le tronc des filaos -------- */
+  --bois-ecorce:      #4A3626;
+  --bois-clair:       #9C7B54;
+  --sable-noir:       #2B2622;  /* la plage de l'Étang-Salé, basaltique    */
+
+  /* --- Lumière : la clairière, la nappe, le papier ----------------------- */
+  --creme:            #F7F2E7;  /* fond clair principal                    */
+  --creme-chaud:      #EFE6D4;  /* surfaces claires alternées              */
+  --blanc-coco:       #FFFDF8;  /* cartes sur fond crème                   */
+
+  /* --- Accents tropicaux : flamboyant & mangue --------------------------- */
+  --flamboyant:       #D94A2B;  /* CTA principal — l'appel téléphonique    */
+  --flamboyant-vif:   #F05F3D;  /* hover                                   */
+  --mangue:           #E8A33D;  /* étoiles d'avis, accents ludiques        */
+  --hibiscus:         #C4386A;  /* micro-accent, univers enfants           */
+
+  /* --- Rôles sémantiques (n'utiliser QUE ceux-ci dans style.css) --------- */
+  --fond:                 var(--creme);
+  --fond-alt:             var(--creme-chaud);
+  --fond-sombre:          var(--vert-sousbois);
+  --surface:              var(--blanc-coco);
+  --surface-sombre:       var(--vert-canopee);
+
+  --texte:                #1C2A20;
+  --texte-doux:           #4C5A50;
+  --texte-sur-sombre:     var(--creme);
+  --texte-doux-sombre:    var(--vert-lichen);
+
+  --bordure:              rgba(28, 42, 32, .14);
+  --bordure-sombre:       rgba(247, 242, 231, .16);
+
+  --cta:                  var(--flamboyant);
+  --cta-hover:            var(--flamboyant-vif);
+  --cta-texte:            #FFF8F2;
+
+  --focus:                var(--mangue);
+
+  /* --- Typographie ------------------------------------------------------- */
+  /* Fraunces : serif variable « wonky », organique — évite le serif de luxe
+     générique. Outfit : sans géométrique chaleureuse, très lisible mobile. */
+  --font-titre: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-texte: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Échelle fluide : mobile-first, sans media query (clamp) */
+  --t-xs:    clamp(0.76rem, 0.74rem + 0.10vw, 0.82rem);
+  --t-sm:    clamp(0.88rem, 0.85rem + 0.14vw, 0.96rem);
+  --t-base:  clamp(1.00rem, 0.96rem + 0.20vw, 1.13rem);
+  --t-md:    clamp(1.14rem, 1.06rem + 0.38vw, 1.34rem);
+  --t-lg:    clamp(1.38rem, 1.20rem + 0.85vw, 1.85rem);
+  --t-xl:    clamp(1.75rem, 1.38rem + 1.75vw, 2.85rem);
+  --t-2xl:   clamp(2.20rem, 1.55rem + 3.10vw, 4.10rem);
+  --t-hero:  clamp(2.65rem, 1.60rem + 5.00vw, 6.00rem);
+
+  /* --- Rythme spatial (base 4px, progression harmonique) ----------------- */
+  --e-1: 0.25rem;  --e-2: 0.5rem;   --e-3: 0.75rem;  --e-4: 1rem;
+  --e-5: 1.5rem;   --e-6: 2rem;     --e-7: 3rem;     --e-8: 4rem;
+  --e-9: 6rem;     --e-10: 8rem;
+
+  --section-y: clamp(3.5rem, 2rem + 7vw, 7.5rem);
+  --gouttiere:  clamp(1.15rem, 0.6rem + 2.6vw, 3rem);
+  --largeur-max: 1240px;
+  --largeur-texte: 62ch;
+
+  /* --- Formes : rien de parfaitement rond, tout est un peu organique ----- */
+  --r-sm:  6px;
+  --r-md:  14px;
+  --r-lg:  24px;
+  --r-xl:  36px;
+  --r-pilule: 999px;
+  /* Galet : asymétrie douce, rappelle une feuille / un galet de rivière */
+  --r-galet: 42% 58% 55% 45% / 48% 42% 58% 52%;
+  --r-feuille: var(--r-xl) var(--e-1) var(--r-xl) var(--e-1);
+
+  /* --- Ombres : diffuses et vertes, comme une ombre sous les arbres ------ */
+  --ombre-1: 0 1px 2px rgba(14, 26, 19, .06), 0 3px 10px rgba(14, 26, 19, .05);
+  --ombre-2: 0 2px 4px rgba(14, 26, 19, .07), 0 12px 28px rgba(14, 26, 19, .09);
+  --ombre-3: 0 4px 8px rgba(14, 26, 19, .08), 0 26px 60px rgba(14, 26, 19, .16);
+  --ombre-cta: 0 4px 14px rgba(217, 74, 43, .34), 0 10px 30px rgba(217, 74, 43, .22);
+
+  /* --- Mouvement : organique, jamais mécanique -------------------------- */
+  --ease-organique: cubic-bezier(.22, .68, .28, 1);
+  --ease-souple:    cubic-bezier(.34, 1.30, .48, 1);   /* léger rebond      */
+  --d-court:  180ms;
+  --d-moyen:  380ms;
+  --d-long:   720ms;
+
+  --z-fond: 0;
+  --z-contenu: 10;
+  --z-header: 100;
+  --z-barre-appel: 110;
+  --z-menu: 120;
+}
+
+/* Le site est volontairement « lumière du jour en sous-bois » : pas de
+   thème sombre alternatif, mais on respecte le confort de lecture. */
+@media (prefers-contrast: more) {
+  :root {
+    --texte-doux: #33413A;
+    --bordure: rgba(28, 42, 32, .32);
+    --texte-doux-sombre: #E4EFD9;
+  }
+}

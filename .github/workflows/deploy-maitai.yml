@@ -1,0 +1,47 @@
+name: Déployer le site Maï-Taï sur GitHub Pages
+
+# Publie UNIQUEMENT le dossier /maitai sur GitHub Pages.
+# Le reste du dépôt (skills Claude Code, etc.) n'est jamais publié.
+#
+# Activation, une seule fois :
+#   Settings → Pages → Build and deployment → Source : « GitHub Actions »
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'maitai/**'
+      - '.github/workflows/deploy-maitai.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Configurer Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empaqueter le dossier maitai
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./maitai
+
+      - name: Déployer
+        id: deploiement
+        uses: actions/deploy-pages@v4
