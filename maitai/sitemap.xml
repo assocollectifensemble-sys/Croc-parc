@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Plan du site. Une seule page pour l'instant (site en une page avec ancres).
+  ⚠️ Mettre à jour <loc> le jour où le nom de domaine définitif est branché.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://assocollectifensemble-sys.github.io/Croc-parc/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
