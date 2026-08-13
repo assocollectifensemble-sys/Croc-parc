@@ -2,13 +2,31 @@
 
 ## En un mot
 
-**Aucune photo réelle n'est actuellement en ligne sur le site.** Les douze visuels
-présents sont des **SVG d'attente** dessinés pour ce projet, dans la palette de la
-charte, et portant en toutes lettres la mention « VISUEL D'ATTENTE — À REMPLACER ».
+**Deux photos réelles sont en ligne**, découpées dans les visuels de communication
+transmis par le client (affiches d'août 2026) :
 
-Ce n'est pas un choix esthétique, c'est une contrainte technique documentée plus bas
-(§ 3). Les vraies photos ont été **identifiées et tracées** ci-dessous : elles sont
-téléchargeables en une commande depuis votre poste (§ 2).
+| Fichier | Emplacement | Origine |
+|---|---|---|
+| `images/hero/maitai-varangue-panneau.jpg` (800 × 428) | Image d'accueil, plein écran | Affiche « Biz tot vacances scolaires », zone photo découpée |
+| `images/galerie/maitai-panneau-peint.jpg` (788 × 436) | Galerie, grande tuile | Affiche « Nou artourne ! », zone photo découpée |
+
+Elles montrent la varangue : charpente de bois, panneau « Maï-Taï Restaurant » peint à
+la main, tables rouges et chaises blanches, plantes tropicales, troncs d'arbres
+intégrés à la structure.
+
+⚠️ **Ce sont des recadrages d'affiches, pas des originaux.** La résolution plafonne à
+800 px de large, ce qui reste juste pour une image plein écran sur grand moniteur : le
+rendu est légèrement doux. **Envoyez-moi les fichiers photo d'origine** (ou déposez-les
+dans `images/`) et la qualité remonte immédiatement, sans autre modification.
+
+**Les dix autres emplacements sont encore occupés par des SVG d'attente**, portant la
+mention « VISUEL D'ATTENTE — À REMPLACER ». Les vraies photos correspondantes ont été
+identifiées et tracées ci-dessous : elles sont téléchargeables en une commande depuis
+votre poste (§ 2).
+
+Manque également le **logo officiel** : celui du site est un placeholder. Il apparaît en
+haut à gauche de l'affiche « Nou artourne ! » mais incrusté sur la photo, donc
+inutilisable en l'état — il faut le fichier source.
 
 ---
 
@@ -16,13 +34,13 @@ téléchargeables en une commande depuis votre poste (§ 2).
 
 | Fichier actuel | Emplacement sur le site | Photo attendue | Format cible |
 |---|---|---|---|
-| `images/hero/PLACEHOLDER-terrasse-foret.svg` | Image d'accueil, plein écran | Vue large de la varangue ou du jardin, lumière du midi | 2000 × 1300, < 350 Ko |
+| ✅ `images/hero/maitai-varangue-panneau.jpg` | Image d'accueil, plein écran | *Occupé* — à remplacer par l'original haute résolution | 2000 × 1300, < 350 Ko |
 | `images/hero/PLACEHOLDER-appel-final.svg` | Fond de la section « Réserver » | Sous-bois, peu contrasté (du texte passe dessus) | 2000 × 1200, < 300 Ko |
 | `images/famille/PLACEHOLDER-pause-dejeuner.svg` | Carte « pause déjeuner » | Table dressée, cadre calme, format portrait | 1200 × 1500, < 200 Ko |
 | `images/famille/PLACEHOLDER-jeux-enfants.svg` | Carte « sortie famille » | Enfants sur l'esplanade, gonflables, mini-golf | 1200 × 1500, < 200 Ko |
 | `images/nature/PLACEHOLDER-foret-filaos.svg` | Section « Le lieu », image principale | Allée de filaos, lumière filtrée | 1200 × 1500, < 200 Ko |
 | `images/nature/PLACEHOLDER-animal-parc.svg` | Section « Le lieu », vignette ronde | Maki catta, paon bleu, tortue ou crocodile | 700 × 700, < 100 Ko |
-| `images/galerie/PLACEHOLDER-01-varangue.svg` | Galerie, grande tuile | La varangue, cadrage large | 1200 × 800, < 180 Ko |
+| ✅ `images/galerie/maitai-panneau-peint.jpg` | Galerie, grande tuile | *Occupé* — à remplacer par l'original haute résolution | 1200 × 800, < 180 Ko |
 | `images/galerie/PLACEHOLDER-02-plat.svg` | Galerie, tuile haute | Un plat de la carte, format portrait | 800 × 1000, < 150 Ko |
 | `images/galerie/PLACEHOLDER-03-jardin.svg` | Galerie | Les tables côté jardin | 800 × 600, < 150 Ko |
 | `images/galerie/PLACEHOLDER-04-kiosques.svg` | Galerie | Kiosques ombragés, espace pique-nique | 800 × 600, < 150 Ko |
@@ -77,7 +95,7 @@ Aucune question de droits : ce sont vos fichiers.
 
 ---
 
-## 3. Pourquoi les photos ne sont pas déjà intégrées
+## 3. Pourquoi les autres photos ne sont pas déjà intégrées
 
 L'environnement dans lequel ce site a été produit applique une **politique réseau
 restrictive** : seuls quelques domaines techniques sont joignables. Toute tentative de

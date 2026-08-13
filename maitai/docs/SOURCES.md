@@ -34,11 +34,28 @@ Sources principales consultées le **13 août 2026** :
 
 ## 2. Horaires
 
+Le rythme n'est **pas uniforme** sur la semaine. C'est la correction la plus tardive
+de la mission, faite à partir des visuels de communication transmis par le client
+(affiches « Nou artourne ! » et « Biz tot vacances scolaires », août 2026).
+
 | Information affichée | Statut | Source |
 |---|---|---|
-| Mardi → dimanche, 11h30 – 14h | ✅ | croc-parc.re : « ouvert du mardi au dimanche midi de 11h30 à 14h » + tableau horaire Tripadvisor (lundi : fermé) — **confirmé par le client** |
+| Mardi → vendredi, 11h30 – 14h, portail privatif ouvert | ✅ | Affiche officielle : « NOTRE PORTAIL SERA OUVERT DU MARDI AU VENDREDI (LUNDI FERMÉ) » |
+| Samedi & dimanche : sur réservation uniquement, par l'entrée principale | ✅ | Affiche officielle : « SAMEDI ET DIMANCHE SUR RÉSERVATION UNIQUEMENT ET ENTRÉE PRINCIPALE DE CROC PARC » |
+| Lundi : fermé | ✅ | Affiches + tableau horaire Tripadvisor |
 | Service du midi uniquement | ✅ | Aucune source ne mentionne de service du soir ; Tripadvisor liste le repas « Déjeuner » |
-| 7j/7 pendant les vacances scolaires | ✅ | **Confirmé par le client.** Le site officiel ne le précise que pour le parc — à répercuter sur croc-parc.re et Google |
+| 7j/7 pendant les vacances scolaires | ✅ | **Confirmé par le client** |
+
+> Les affiches annoncent un **retour au rythme normal le mardi 18 août 2026**, à la fin
+> des vacances scolaires. Le site décrit donc ce rythme normal **sans mentionner de
+> date** : une date de réouverture périme en quelques jours et le site n'a pas vocation
+> à être remis à jour chaque semaine. Si vous voulez l'afficher malgré tout pendant la
+> semaine qui précède, c'est un bandeau à ajouter puis à retirer — dites-le-moi.
+
+> ⚠️ **La formulation de croc-parc.re est incomplète.** « Ouvert du mardi au dimanche
+> midi de 11h30 à 14h » ne dit pas que le week-end est sur réservation et passe par
+> l'entrée principale. Un client qui se présente sans réserver un samedi repart déçu.
+> À corriger sur le site du parc **et** sur la fiche Google.
 
 **Le parc**, lui (contexte, non affiché comme horaire du restaurant) : 10h–17h, du mardi
 au dimanche hors vacances scolaires, 7j/7 pendant les vacances et jours fériés.
@@ -50,6 +67,7 @@ Tarif unique **15 € par personne** dès 3 ans, gratuit en dessous, 5 € en sc
 
 | Information affichée | Statut | Source |
 |---|---|---|
+| **Menu du midi à 26 € — entrée, plat, dessert, places limitées** | ✅ | Affiches officielles : « ON VOUS PRÉPARE UN MENU À 26€ (ENTRÉE PLAT DESSERT) MAIS IL N'Y EN AURA PAS POUR TOUT LE MONDE ! » — **confirmé par le client** |
 | « Des suggestions qui se renouvellent chaque semaine » | ✅ | croc-parc.re, mot pour mot |
 | « La carte de la semaine est publiée sur nos réseaux sociaux » | ✅ | croc-parc.re |
 | Les 6 plats et leurs prix affichés | ✅ | **Menu publié sur la fiche Tripadvisor**, relevé le 13/08/2026 |
@@ -91,6 +109,9 @@ Tarif unique **15 € par personne** dès 3 ans, gratuit en dessous, 5 € en sc
 | Information affichée | Statut | Source |
 |---|---|---|
 | Portail privatif à 300 m de l'entrée principale, direction Golf Bourbon | ✅ | croc-parc.re, mot pour mot — **c'est l'argument clé du déjeuner en semaine** |
+| Portail privatif ouvert **du mardi au vendredi** | ✅ | Affiches officielles |
+| Déjeuner faisable **en une heure** | ✅ | **Confirmé par le client** (« le déjeuner peut être très rapide, en une heure c'est fait, ils sont très bons ») |
+| Après le déjeuner : entrée du parc à **8 € pour les enfants** (au lieu de 15 €), **offerte pour les adultes** | 🟡 | **Communiqué par le client**, qui précise qu'il s'agit d'un **arrangement** et non d'une offre officielle, et qu'il le **fera valider par le gérant**. Publié à sa demande explicite — voir § 7 |
 | Parking privatif gratuit | ✅ | croc-parc.re (« un parking privatif pour vos évènements et le restaurant ») + Tripadvisor (« Parking privé gratuit ») |
 | Accessible PMR et poussettes | ✅ | croc-parc.re (FAQ *Accessibilité*) |
 | Temps de trajet (10 / 15 / 25 min) | 🟡 | **Estimations**, présentées comme indicatives sur le site |
@@ -142,16 +163,17 @@ C'est probablement l'argument commercial le plus fort dont vous disposez pour la
 
 Par ordre d'impact sur la conversion :
 
-1. 🔴 **L'entrée du parc est-elle offerte quand on vient déjeuner ?**
-   Un client l'affirme, le site officiel n'en parle pas. Si oui : à mettre en avant
-   partout, et à ajouter dans la carte « pause déjeuner ». Si non : rien à changer, le
-   site ne le promet pas.
-2. 🔴 **Existe-t-il une formule ou un plat du jour le midi, et à quel prix ?**
-   Les prix relevés (21–32 €) correspondent à une carte de restaurant, pas à une
-   formule déjeuner rapide. C'est un point de friction possible avec la cible active.
-3. 🔴 **Combien de temps dure un déjeuner ?** L'argument « pause d'une heure » est
-   décisif pour les actifs — il n'est pas affirmé sur le site faute de source.
-4. 🟡 **La carte affichée est-elle toujours d'actualité ?** Relevée le 13/08/2026.
+1. 🟡 **L'avantage parc doit être validé par le gérant.**
+   Le site annonce aujourd'hui : après le déjeuner, entrée du parc à **8 € pour les
+   enfants** au lieu de 15 €, **offerte pour les adultes**. C'est publié à la demande
+   explicite du client, qui a précisé qu'il s'agit d'un **arrangement** et non d'une
+   offre officielle, et qu'il le ferait valider.
+   **C'est la seule information du site qui promet un tarif.** Si le gérant ne la
+   confirme pas, il faut la retirer sans attendre : chercher `L'avantage table` dans
+   `index.html` et supprimer le bloc `carte-public__bonus`. Une promesse tarifaire non
+   tenue coûte plus cher en avis négatifs qu'elle ne rapporte en visites.
+2. 🟡 **La carte à la carte affichée est-elle toujours d'actualité ?**
+   Relevée sur Tripadvisor le 13/08/2026. Le menu à 26 €, lui, est confirmé.
 5. 🟡 **Le restaurant prend-il les groupes et les privatisations ?** Le parc, oui
    (CSE, groupes, événements). Pour le restaurant seul, rien. Potentiel commercial réel.
 6. 🟡 **Le portail privatif est-il ouvert en permanence pendant le service ?**

@@ -375,7 +375,10 @@ body.menu-ouvert .burger { border-color: var(--bordure-sombre); background: rgba
 .hero__media { position: absolute; inset: 0; z-index: -2; }
 .hero__media img {
   width: 100%; height: 100%;
-  object-fit: cover; object-position: center 55%;
+  /* En portrait, une photo panoramique est forcément très recadrée : on vise la
+     zone des tables plutôt que le centre du panneau, qui donnerait un gros plan
+     illisible sur deux lettres. */
+  object-fit: cover; object-position: 34% 48%;
   /* Zoom très lent : le sous-bois « respire » */
   animation: respiration 26s var(--ease-organique) infinite alternate;
 }
@@ -383,11 +386,15 @@ body.menu-ouvert .burger { border-color: var(--bordure-sombre); background: rgba
   from { transform: scale(1.02); }
   to   { transform: scale(1.11); }
 }
-/* Double voile : lisibilité garantie quelle que soit la photo */
+/* Triple voile. La photo comporte un grand panneau blanc : sans un voile
+   franc, le titre vert clair devient illisible dès qu'il passe dessus. On
+   assombrit donc pour de bon — la photo reste lisible comme ambiance, et le
+   texte garde un contraste suffisant quelle que soit la photo mise plus tard. */
 .hero__voile {
   position: absolute; inset: 0; z-index: -1;
   background:
-    linear-gradient(to top, rgba(14,26,19,.94) 4%, rgba(14,26,19,.62) 38%, rgba(14,26,19,.18) 72%, rgba(14,26,19,.42) 100%),
+    linear-gradient(to top, rgba(14,26,19,.96) 4%, rgba(14,26,19,.84) 34%, rgba(14,26,19,.62) 66%, rgba(14,26,19,.72) 100%),
+    linear-gradient(to right, rgba(14,26,19,.68), rgba(14,26,19,.22) 62%, transparent),
     radial-gradient(120% 80% at 50% 100%, rgba(23,40,29,.75), transparent 60%);
 }
 
@@ -534,12 +541,15 @@ body.menu-ouvert .burger { border-color: var(--bordure-sombre); background: rgba
 .carte-public__media { position: absolute; inset: 0; z-index: -2; }
 .carte-public__media img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--d-long) var(--ease-organique); }
 .carte-public:hover .carte-public__media img { transform: scale(1.05); }
+/* Le voile doit rester lisible quelle que soit la photo mise derrière, y
+   compris une photo claire ou chargée : on assombrit franchement la moitié
+   basse, là où vit le texte. */
 .carte-public::after {
   content: ""; position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(to top, rgba(14,26,19,.95) 12%, rgba(14,26,19,.55) 55%, rgba(14,26,19,.28) 100%);
+  background: linear-gradient(to top, rgba(14,26,19,.97) 20%, rgba(14,26,19,.86) 52%, rgba(14,26,19,.5) 82%, rgba(14,26,19,.3) 100%);
 }
 .carte-public--famille::after {
-  background: linear-gradient(to top, rgba(43,16,30,.92) 12%, rgba(60,26,20,.5) 55%, rgba(14,26,19,.3) 100%);
+  background: linear-gradient(to top, rgba(43,16,30,.96) 20%, rgba(52,22,26,.85) 52%, rgba(40,22,24,.5) 82%, rgba(14,26,19,.32) 100%);
 }
 .carte-public__etiquette {
   align-self: flex-start;
@@ -564,6 +574,26 @@ body.menu-ouvert .burger { border-color: var(--bordure-sombre); background: rgba
 .carte-public__liste svg { width: 1.05rem; height: 1.05rem; flex: none; margin-top: .28em; color: var(--vert-pousse); }
 .carte-public--famille .carte-public__liste svg { color: var(--mangue); }
 .carte-public .btn { margin-top: var(--e-5); align-self: flex-start; }
+
+/* Encadré « avantage » : l'argument chiffré doit se détacher de la liste */
+.carte-public__bonus {
+  margin-top: var(--e-5);
+  padding: var(--e-4);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(232, 163, 61, .45);
+  background: rgba(232, 163, 61, .12);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+}
+.carte-public__bonus b {
+  display: block;
+  font-family: var(--font-texte);
+  font-size: var(--t-xs); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--mangue);
+  margin-bottom: var(--e-2);
+}
+.carte-public__bonus strong { color: var(--creme); }
 
 /* ------------------------------------------------------------------ HISTOIRE */
 .histoire__grille {
@@ -632,11 +662,44 @@ body.menu-ouvert .burger { border-color: var(--bordure-sombre); background: rgba
 .ardoise__note { text-align: center; color: var(--vert-lichen); font-size: var(--t-sm); margin-top: var(--e-4); }
 .ardoise .groupe-btn { justify-content: center; }
 
+/* La formule du midi : le prix est l'information la plus regardée de la page,
+   il est traité comme tel — au-dessus des plats, et impossible à manquer. */
+.ardoise__formule {
+  margin-top: var(--e-6);
+  padding: var(--e-5) var(--e-4);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(232, 163, 61, .4);
+  background: rgba(232, 163, 61, .1);
+  text-align: center;
+}
+.ardoise__formule-libelle {
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--mangue);
+}
+.ardoise__formule-prix {
+  font-family: var(--font-titre);
+  font-size: var(--t-2xl);
+  line-height: 1.05;
+  color: var(--creme);
+  font-variation-settings: "SOFT" 50, "WONK" 1;
+  margin-block: var(--e-1);
+}
+.ardoise__formule-note { font-size: var(--t-sm); color: var(--vert-lichen); }
+
+.ardoise__soustitre {
+  margin-top: var(--e-7);
+  text-align: center;
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--vert-lichen);
+}
+
 /* Les plats écrits à la craie sur l'ardoise */
 .ardoise__plats {
   position: relative;
   display: grid; gap: var(--e-5);
-  margin-top: var(--e-6);
+  margin-top: var(--e-5);
 }
 .ardoise__plat { display: grid; gap: var(--e-1); }
 .ardoise__nom {

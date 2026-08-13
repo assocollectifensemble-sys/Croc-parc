@@ -20,9 +20,10 @@
   // prudente le lundi et le dit explicitement plutôt que d'annoncer à tort une
   // fermeture. Le texte affiché en dur dans la page, lui, précise bien le 7j/7.
   var HORAIRES = {
-    ouverture: 11 * 60 + 30,          // 11h30 — service du midi uniquement
-    fermeture: 14 * 60,               // 14h00
-    joursOuverts: [0, 2, 3, 4, 5, 6]  // dimanche, mardi → samedi
+    ouverture: 11 * 60 + 30,           // 11h30 — service du midi uniquement
+    fermeture: 14 * 60,                // 14h00
+    joursOuverts: [0, 2, 3, 4, 5, 6],  // dimanche, mardi → samedi
+    joursSurReservation: [6, 0]        // samedi et dimanche : réservation obligatoire
   };
 
   function heureALaReunion() {
@@ -47,11 +48,16 @@
     if (t.jour === undefined || isNaN(t.minutes)) return;
 
     var ouvertAujourdhui = HORAIRES.joursOuverts.indexOf(t.jour) !== -1;
+    var surReservation = HORAIRES.joursSurReservation.indexOf(t.jour) !== -1;
     var ouvert = ouvertAujourdhui && t.minutes >= HORAIRES.ouverture && t.minutes < HORAIRES.fermeture;
     var libelle;
 
-    if (ouvert) {
+    if (ouvert && surReservation) {
+      libelle = "Service en cours — sur réservation";
+    } else if (ouvert) {
       libelle = "Service en cours — jusqu'à 14h";
+    } else if (ouvertAujourdhui && t.minutes < HORAIRES.ouverture && surReservation) {
+      libelle = "Aujourd'hui sur réservation uniquement";
     } else if (ouvertAujourdhui && t.minutes < HORAIRES.ouverture) {
       libelle = "Ouvre aujourd'hui à 11h30";
     } else if (t.jour === 1) {
