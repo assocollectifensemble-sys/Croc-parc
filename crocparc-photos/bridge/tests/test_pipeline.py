@@ -17,7 +17,7 @@ import pytest
 from PIL import Image
 
 from bridge.config import Config
-from bridge.imaging import make_preview, open_oriented
+from bridge.imaging import make_preview, open_oriented, read_metadata, sha1_of
 from bridge.models import FileState, SessionStatus
 from bridge.processor import Processor
 from bridge.queue import Queue
@@ -65,6 +65,16 @@ def deposer_journee(inbox: Path) -> dict[str, list[Path]]:
     return depose
 
 
+def archives(config: Config) -> set[str]:
+    """Originaux archives localement, en chemins relatifs a ORIGINALS_DIR."""
+    racine = config.originals_dir
+    return {
+        str(path.relative_to(racine)).replace("\\", "/")
+        for path in racine.rglob("*.JPG")
+        if path.is_file() and path.parts[len(racine.parts)] != "cards"
+    }
+
+
 def cles(config: Config, bucket: str) -> set[str]:
     racine = config.output_dir / bucket
     if not racine.is_dir():
@@ -76,8 +86,8 @@ def cles(config: Config, bucket: str) -> set[str]:
 
 # -- critere d'acceptation ---------------------------------------------------
 def test_trente_jpeg_trois_cartes_trois_sessions(config, queue, processor):
-    depose = deposer_journee(config.inbox_dir)
-    assert len(list(config.inbox_dir.glob("*.JPG"))) == 30
+    depose = deposer_journee(config.watch_dir)
+    assert len(list(config.watch_dir.glob("*.JPG"))) == 30
 
     run(processor, config, queue)
 
@@ -87,20 +97,24 @@ def test_trente_jpeg_trois_cartes_trois_sessions(config, queue, processor):
     assert [session.photo_count for session in sessions] == [9, 9, 9]
 
     previews = cles(config, config.previews_bucket)
-    originaux = cles(config, config.originals_bucket)
     assert len(previews) == 54  # 27 previews + 27 vignettes
-    assert len(originaux) == 27
+    # Les originaux ne montent pas sur le stockage objet : ils restent au parc
+    # et n'en partiront que vendus, sur appel de /fetch-original.
+    assert cles(config, config.originals_bucket) == set()
+    stockes = archives(config)
+    assert len(stockes) == 27
 
     for code in CODES:
         for photo in depose[code]:
             base = photo.stem
             assert f"{JOUR}/{code}/{base}_p.jpg" in previews
             assert f"{JOUR}/{code}/{base}_t.jpg" in previews
-            assert f"{JOUR}/{code}/{photo.name}" in originaux
+            assert f"{JOUR}/{code}/{photo.name}" in stockes
+            assert queue.get(photo).original_path == f"{JOUR}/{code}/{photo.name}"
 
 
 def test_les_photos_de_cartes_ne_sont_jamais_publiees(config, queue, processor):
-    depose = deposer_journee(config.inbox_dir)
+    depose = deposer_journee(config.watch_dir)
     run(processor, config, queue)
 
     publie = cles(config, config.previews_bucket) | cles(config, config.originals_bucket)
@@ -109,16 +123,16 @@ def test_les_photos_de_cartes_ne_sont_jamais_publiees(config, queue, processor):
         ligne = queue.get(carte)
         assert ligne.state is FileState.DONE
         assert ligne.is_card is True
-        assert ligne.preview_key is None and ligne.original_key is None
+        assert ligne.preview_key is None and ligne.original_path is None
         assert ligne.session_id is not None
         # La carte est tout de meme archivee localement, pour pouvoir enqueter
         # sur une lecture douteuse.
-        archive = config.archive_dir / "cards" / JOUR / f"{ligne.code}-{carte.name}"
+        archive = config.originals_dir / "cards" / JOUR / f"{ligne.code}-{carte.name}"
         assert archive.is_file()
 
 
 def test_previews_filigranees_et_dimensionnees(config, queue, processor):
-    depose = deposer_journee(config.inbox_dir)
+    depose = deposer_journee(config.watch_dir)
     run(processor, config, queue)
 
     source = depose[CODES[0]][0]
@@ -149,20 +163,18 @@ def test_previews_filigranees_et_dimensionnees(config, queue, processor):
 
 
 def test_originaux_copies_a_l_identique(config, queue, processor):
-    depose = deposer_journee(config.inbox_dir)
+    depose = deposer_journee(config.watch_dir)
     run(processor, config, queue)
 
     for code in CODES:
         for source in depose[code]:
-            archive = config.archive_dir / JOUR / code / source.name
-            objet = config.output_dir / config.originals_bucket / f"{JOUR}/{code}/{source.name}"
+            archive = config.originals_dir / JOUR / code / source.name
             assert md5(archive) == md5(source)
-            assert md5(objet) == md5(source)
 
 
 # -- robustesse ---------------------------------------------------------------
 def test_rejouer_ne_duplique_rien(config, queue, processor):
-    deposer_journee(config.inbox_dir)
+    deposer_journee(config.watch_dir)
     run(processor, config, queue)
     empreintes = {cle: md5(config.output_dir / config.previews_bucket / cle)
                   for cle in cles(config, config.previews_bucket)}
@@ -178,7 +190,7 @@ def test_rejouer_ne_duplique_rien(config, queue, processor):
 
 def test_redemarrage_du_service_reprend_sans_perte_ni_doublon(config, tmp_path):
     """Coupure au milieu du lot : le service redemarre et finit le travail."""
-    deposer_journee(config.inbox_dir)
+    deposer_journee(config.watch_dir)
 
     premiere = Queue(config.db_path)
     premiere.migrate()
@@ -194,7 +206,7 @@ def test_redemarrage_du_service_reprend_sans_perte_ni_doublon(config, tmp_path):
     run(reprise, config, seconde, now=T0 + 10)
 
     assert [s.photo_count for s in seconde.sessions_for_day(JOUR)] == [9, 9, 9]
-    assert len(cles(config, config.originals_bucket)) == 27
+    assert len(archives(config)) == 27
     restants = seconde.ready(
         (FileState.DISCOVERED, FileState.STABLE, FileState.ANALYZED,
          FileState.PROCESSED, FileState.UPLOADED), now=T0 + 1000
@@ -205,7 +217,7 @@ def test_redemarrage_du_service_reprend_sans_perte_ni_doublon(config, tmp_path):
 
 def test_fichier_en_cours_d_ecriture_n_est_pas_traite(config, queue, processor):
     """Le FTP ecrit progressivement : tant que la taille bouge, on ne touche a rien."""
-    chemin = config.inbox_dir / "DSC09999.JPG"
+    chemin = config.watch_dir / "DSC09999.JPG"
     make_photo(chemin, datetime(2026, 10, 15, 10, 0, 0), size=(2400, 1600), seed=99)
     complet = chemin.read_bytes()
     chemin.write_bytes(complet[: len(complet) // 3])
@@ -227,7 +239,7 @@ def test_fichier_en_cours_d_ecriture_n_est_pas_traite(config, queue, processor):
     assert ligne.state is FileState.DONE
     # L'original archive est le fichier complet : aucun JPEG tronque n'est passe.
     session = queue.session(ligne.session_id)
-    archive = config.archive_dir / JOUR / session.code / chemin.name
+    archive = config.originals_dir / JOUR / session.code / chemin.name
     assert md5(archive) == hashlib.md5(complet).hexdigest()
 
 
@@ -246,11 +258,12 @@ def test_reseau_coupe_puis_retabli(config, queue):
 
     registrar = RegistrarCapricieux()
     processeur = Processor(config, queue, LocalStorage(config.output_dir), registrar)
-    deposer_journee(config.inbox_dir)
+    deposer_journee(config.watch_dir)
 
     run(processeur, config, queue)
     assert registrar.echecs > 0
-    assert len(cles(config, config.originals_bucket)) == 27  # deja depose sur le stockage
+    assert len(cles(config, config.previews_bucket)) == 54  # deja depose sur le stockage
+    assert len(archives(config)) == 27  # et archive au parc
     en_attente = queue.ready((FileState.UPLOADED,), now=T0 + 10_000)
     assert len(en_attente) == 27  # rien n'est perdu, tout attend son tour
 
@@ -263,12 +276,12 @@ def test_reseau_coupe_puis_retabli(config, queue):
 def test_photos_avant_toute_carte_en_session_orpheline(config, queue, processor):
     for index in range(3):
         make_photo(
-            config.inbox_dir / f"DSC0000{index}.JPG",
+            config.watch_dir / f"DSC0000{index}.JPG",
             datetime(2026, 10, 15, 8, 30 + index),
             seed=index,
         )
-    make_card(config.inbox_dir / "DSC00010.JPG", "K7M2QP", datetime(2026, 10, 15, 9, 0))
-    make_photo(config.inbox_dir / "DSC00011.JPG", datetime(2026, 10, 15, 9, 5), seed=11)
+    make_card(config.watch_dir / "DSC00010.JPG", "K7M2QP", datetime(2026, 10, 15, 9, 0))
+    make_photo(config.watch_dir / "DSC00011.JPG", datetime(2026, 10, 15, 9, 5), seed=11)
 
     run(processor, config, queue)
 
@@ -281,9 +294,9 @@ def test_photos_avant_toute_carte_en_session_orpheline(config, queue, processor)
 
 
 def test_deux_cartes_consecutives_donnent_une_session_vide(config, queue, processor):
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    make_card(config.inbox_dir / "DSC00002.JPG", "Q4RT5Y", datetime(2026, 10, 15, 10, 1))
-    make_photo(config.inbox_dir / "DSC00003.JPG", datetime(2026, 10, 15, 10, 2), seed=3)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_card(config.watch_dir / "DSC00002.JPG", "Q4RT5Y", datetime(2026, 10, 15, 10, 1))
+    make_photo(config.watch_dir / "DSC00003.JPG", datetime(2026, 10, 15, 10, 2), seed=3)
 
     run(processor, config, queue)
 
@@ -295,12 +308,12 @@ def test_deux_cartes_consecutives_donnent_une_session_vide(config, queue, proces
 
 def test_carte_arrivee_apres_ses_photos(config, queue, processor):
     """Le FTP a inverse deux fichiers : la photo est rerangee quand la carte arrive."""
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    photo = make_photo(config.inbox_dir / "DSC00003.JPG", datetime(2026, 10, 15, 11, 5), seed=3)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.watch_dir / "DSC00003.JPG", datetime(2026, 10, 15, 11, 5), seed=3)
     run(processor, config, queue)
     assert queue.get(photo).session_id == queue.sessions_for_day(JOUR)[0].id
 
-    make_card(config.inbox_dir / "DSC00002.JPG", "Q4RT5Y", datetime(2026, 10, 15, 11, 0))
+    make_card(config.watch_dir / "DSC00002.JPG", "Q4RT5Y", datetime(2026, 10, 15, 11, 0))
     run(processor, config, queue, now=T0 + 100)
 
     sessions = {session.code: session for session in queue.sessions_for_day(JOUR)}
@@ -312,8 +325,8 @@ def test_carte_arrivee_apres_ses_photos(config, queue, processor):
 
 
 def test_photo_sans_date_exif_utilise_la_date_du_fichier(config, queue, processor):
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    sans_exif = make_photo(config.inbox_dir / "DSC00002.JPG", shot_at=None, seed=2)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    sans_exif = make_photo(config.watch_dir / "DSC00002.JPG", shot_at=None, seed=2)
     run(processor, config, queue)
     ligne = queue.get(sans_exif)
     assert ligne.state is FileState.DONE
@@ -321,14 +334,14 @@ def test_photo_sans_date_exif_utilise_la_date_du_fichier(config, queue, processo
 
 
 def test_fichier_non_jpeg_ignore(config, queue, processor):
-    (config.inbox_dir / "notes.txt").write_text("bonjour", encoding="utf-8")
-    (config.inbox_dir / "DSC00001.ARW").write_bytes(b"raw")
+    (config.watch_dir / "notes.txt").write_text("bonjour", encoding="utf-8")
+    (config.watch_dir / "DSC00001.ARW").write_bytes(b"raw")
     scan_inbox(config, queue)
     assert queue.ready(tuple(FileState), now=T0) == []
 
 
 def test_jpeg_illisible_mis_en_quarantaine(config, queue, processor):
-    corrompu = config.inbox_dir / "DSC00001.JPG"
+    corrompu = config.watch_dir / "DSC00001.JPG"
     corrompu.write_bytes(b"\xff\xd8\xff\xe0 pas vraiment un JPEG")
     run(processor, config, queue)
     for tentative in range(1, 12):
@@ -342,43 +355,43 @@ def test_jpeg_illisible_mis_en_quarantaine(config, queue, processor):
 # -- retention et reutilisation des cartes ------------------------------------
 def test_purge_de_l_inbox_apres_retention(config, queue, processor):
     """Les originaux de l'inbox s'effacent une fois archives depuis 15 jours."""
-    deposer_journee(config.inbox_dir)
+    deposer_journee(config.watch_dir)
     run(processor, config, queue)
-    assert len(list(config.inbox_dir.glob("*.JPG"))) == 30
+    assert len(list(config.watch_dir.glob("*.JPG"))) == 30
 
     # La retention se compte sur l'horloge murale, pas sur la base de temps du
     # backoff : rien ne part avant l'echeance.
     assert processor.purge_inbox(now=time.time()) == 0
-    assert len(list(config.inbox_dir.glob("*.JPG"))) == 30
+    assert len(list(config.watch_dir.glob("*.JPG"))) == 30
 
     assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 30
-    assert list(config.inbox_dir.glob("*.JPG")) == []
+    assert list(config.watch_dir.glob("*.JPG")) == []
 
     # Les archives et la sortie publiable, elles, ne bougent pas.
-    assert len(cles(config, config.originals_bucket)) == 27
-    assert len(list((config.archive_dir / JOUR).rglob("*.JPG"))) == 27
-    assert len(list((config.archive_dir / "cards").rglob("*.JPG"))) == 3
+    assert len(cles(config, config.previews_bucket)) == 54
+    assert len(list((config.originals_dir / JOUR).rglob("*.JPG"))) == 27
+    assert len(list((config.originals_dir / "cards").rglob("*.JPG"))) == 3
     # Et un balayage apres purge ne ressuscite rien.
     scan_inbox(config, queue)
     assert [s.photo_count for s in queue.sessions_for_day(JOUR)] == [9, 9, 9]
 
 
 def test_purge_refuse_si_l_archive_manque(config, queue, processor):
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    photo = make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
     run(processor, config, queue)
 
-    (config.archive_dir / JOUR / "K7M2QP" / "DSC00002.JPG").unlink()
+    (config.originals_dir / JOUR / "K7M2QP" / "DSC00002.JPG").unlink()
     assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 1  # seule la carte part
     assert photo.exists()
 
 
 def test_purge_refuse_si_l_archive_differe(config, queue, processor):
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    photo = make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
     run(processor, config, queue)
 
-    archive = config.archive_dir / JOUR / "K7M2QP" / "DSC00002.JPG"
+    archive = config.originals_dir / JOUR / "K7M2QP" / "DSC00002.JPG"
     archive.write_bytes(archive.read_bytes() + b"corruption")
     processor.purge_inbox(now=time.time() + 16 * 24 * 3600)
     assert photo.exists()
@@ -386,19 +399,19 @@ def test_purge_refuse_si_l_archive_differe(config, queue, processor):
 
 
 def test_purge_desactivable(config, queue, tmp_path):
-    configuration = dataclasses.replace(config, inbox_retention_days=0)
+    configuration = dataclasses.replace(config, watch_retention_days=0)
     processeur = Processor(
         configuration, queue, LocalStorage(configuration.output_dir), NullRegistrar()
     )
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
     run(processeur, configuration, queue)
     assert processeur.purge_inbox(now=time.time() + 365 * 24 * 3600) == 0
-    assert (config.inbox_dir / "DSC00001.JPG").exists()
+    assert (config.watch_dir / "DSC00001.JPG").exists()
 
 
 def test_le_sas_de_travail_ne_grossit_pas(config, queue, processor):
     """Les derives sont effaces du dossier de travail une fois deposes."""
-    deposer_journee(config.inbox_dir)
+    deposer_journee(config.watch_dir)
     run(processor, config, queue)
     assert list(config.work_dir.rglob("*.jpg")) == []
     assert len(cles(config, config.previews_bucket)) == 54
@@ -406,10 +419,10 @@ def test_le_sas_de_travail_ne_grossit_pas(config, queue, processor):
 
 def test_carte_rephotographiee_le_meme_jour_est_signalee(config, queue, processor):
     """Deux groupes, une seule carte, le meme jour : galerie partagee, alerte levee."""
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
-    make_card(config.inbox_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 15, 14, 0))
-    make_photo(config.inbox_dir / "DSC00004.JPG", datetime(2026, 10, 15, 14, 5), seed=4)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.watch_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 15, 14, 0))
+    make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 10, 15, 14, 5), seed=4)
 
     run(processor, config, queue)
 
@@ -422,10 +435,10 @@ def test_carte_rephotographiee_le_meme_jour_est_signalee(config, queue, processo
 
 
 def test_carte_reutilisee_un_autre_jour_ouvre_une_session_neuve(config, queue, processor):
-    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
-    make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
-    make_card(config.inbox_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 16, 10, 0))
-    make_photo(config.inbox_dir / "DSC00004.JPG", datetime(2026, 10, 16, 10, 5), seed=4)
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.watch_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 16, 10, 0))
+    make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 10, 16, 10, 5), seed=4)
 
     run(processor, config, queue)
 
@@ -433,3 +446,31 @@ def test_carte_reutilisee_un_autre_jour_ouvre_une_session_neuve(config, queue, p
     assert len(queue.sessions_for_day("2026-10-16")) == 1
     assert queue.sessions_for_day("2026-10-15")[0].id != queue.sessions_for_day("2026-10-16")[0].id
     assert not [e for e in queue.events() if e["kind"] == "card_reused"]
+
+
+def test_original_archive_nettoye_de_ses_coordonnees_gps(config, queue, processor):
+    """Une photo geolocalisee est vendue sans ses coordonnees, sans perte de qualite."""
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    source = make_photo(
+        config.watch_dir / "DSC00002.JPG",
+        datetime(2026, 10, 15, 10, 5),
+        seed=42,
+        gps=True,
+    )
+    with Image.open(source) as image:
+        pixels_source = hashlib.md5(image.tobytes()).hexdigest()
+
+    run(processor, config, queue)
+
+    archive = config.originals_dir / JOUR / "K7M2QP" / "DSC00002.JPG"
+    assert read_metadata(archive).has_gps is False
+    assert read_metadata(source).has_gps is True  # le fichier de l'inbox n'est pas touche
+    with Image.open(archive) as image:
+        assert hashlib.md5(image.tobytes()).hexdigest() == pixels_source
+    assert any(evenement["kind"] == "gps_removed" for evenement in queue.events())
+
+    # L'empreinte enregistree suit l'archive nettoyee, sinon la purge refuserait
+    # d'effacer ce fichier en croyant l'archive corrompue.
+    assert queue.get(source).sha1 == sha1_of(archive)
+    assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 2
+    assert not source.exists()

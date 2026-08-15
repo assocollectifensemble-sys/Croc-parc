@@ -1,0 +1,29 @@
+name = "crocparc-photos"
+pages_build_output_dir = "web"
+compatibility_date = "2024-09-23"
+
+# Base de donnees. L'identifiant est cree une fois avec :
+#   npx wrangler d1 create crocparc-photos
+[[d1_databases]]
+binding = "DB"
+database_name = "crocparc-photos"
+database_id = "a-remplacer-apres-wrangler-d1-create"
+# En local, wrangler cree une base SQLite sous .wrangler/state, l'identifiant
+# ci-dessus n'est utilise qu'en production.
+migrations_dir = "db/migrations"
+
+# Previews et vignettes uniquement : les originaux restent au parc.
+[[r2_buckets]]
+binding = "PREVIEWS"
+bucket_name = "crocparc-previews"
+
+# Bucket prive, alimente a la demande par le pont apres paiement.
+[[r2_buckets]]
+binding = "ORIGINALS"
+bucket_name = "crocparc-originals"
+
+[vars]
+SESSION_TTL_DAYS = "30"
+
+# Secrets, jamais dans ce fichier :
+#   npx wrangler pages secret put BRIDGE_SHARED_SECRET

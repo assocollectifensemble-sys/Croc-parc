@@ -98,11 +98,11 @@ def parse_tz_offset(raw: str) -> timezone:
 @dataclass(frozen=True)
 class Config:
     # Dossiers
-    inbox_dir: Path
+    watch_dir: Path
     data_dir: Path
     db_path: Path
     work_dir: Path
-    archive_dir: Path
+    originals_dir: Path
     output_dir: Path
     log_dir: Path
 
@@ -111,7 +111,7 @@ class Config:
     poll_interval: float
     rescan_interval: float
     extensions: tuple[str, ...]
-    inbox_retention_days: int
+    watch_retention_days: int
     purge_interval: float
 
     # Reprise sur erreur
@@ -143,6 +143,16 @@ class Config:
     previews_bucket: str
     originals_bucket: str
 
+    # Liaison avec les Functions Cloudflare
+    shared_secret: str
+    ingest_url: str
+    r2_endpoint: str
+    r2_access_key_id: str
+    r2_secret_access_key: str
+    fetch_host: str
+    fetch_port: int
+    http_timeout: float
+
     # Supervision
     health_host: str
     health_port: int
@@ -156,14 +166,14 @@ class Config:
         if env_file is not None:
             load_dotenv(env_file)
 
-        raw_inbox = _get("BRIDGE_INBOX_DIR")
-        if raw_inbox is None:
+        raw_watch = _get("WATCH_DIR")
+        if raw_watch is None:
             raise ConfigError(
-                "BRIDGE_INBOX_DIR est obligatoire : c'est le dossier ou le FTP "
+                "WATCH_DIR est obligatoire : c'est le dossier ou le FTP "
                 "de l'appareil depose les JPEG."
             )
-        inbox = Path(raw_inbox).expanduser()
-        inbox = inbox if inbox.is_absolute() else (base / inbox).resolve()
+        watch = Path(raw_watch).expanduser()
+        watch = watch if watch.is_absolute() else (base / watch).resolve()
 
         data_dir = _get_path("BRIDGE_DATA_DIR", base / "data", base)
         watermark_font_raw = _get("WATERMARK_FONT")
@@ -178,6 +188,25 @@ class Config:
         if registrar_backend not in {"none", "api"}:
             raise ConfigError(
                 f"BRIDGE_REGISTRAR_BACKEND doit valoir none ou api, recu {registrar_backend!r}"
+            )
+
+        secret = _get("BRIDGE_SHARED_SECRET", "")
+        if storage_backend == "r2" and not all(
+            (_get("R2_ENDPOINT"), _get("R2_ACCESS_KEY_ID"), _get("R2_SECRET_ACCESS_KEY"))
+        ):
+            raise ConfigError(
+                "BRIDGE_STORAGE_BACKEND=r2 exige R2_ENDPOINT, R2_ACCESS_KEY_ID et "
+                "R2_SECRET_ACCESS_KEY"
+            )
+        if registrar_backend == "api" and not (secret and _get("BRIDGE_INGEST_URL")):
+            raise ConfigError(
+                "BRIDGE_REGISTRAR_BACKEND=api exige BRIDGE_INGEST_URL et "
+                "BRIDGE_SHARED_SECRET"
+            )
+        if secret and len(secret) < 32:
+            raise ConfigError(
+                "BRIDGE_SHARED_SECRET doit faire au moins 32 caracteres "
+                "(openssl rand -hex 32)"
             )
 
         extensions = tuple(
@@ -202,18 +231,18 @@ class Config:
             gallery_base_url += "/"
 
         return cls(
-            inbox_dir=inbox,
+            watch_dir=watch,
             data_dir=data_dir,
             db_path=_get_path("BRIDGE_DB_PATH", data_dir / "bridge.db", base),
             work_dir=_get_path("BRIDGE_WORK_DIR", data_dir / "work", base),
-            archive_dir=_get_path("BRIDGE_ARCHIVE_DIR", data_dir / "originals", base),
+            originals_dir=_get_path("ORIGINALS_DIR", data_dir / "originals", base),
             output_dir=_get_path("BRIDGE_OUTPUT_DIR", data_dir / "out", base),
             log_dir=_get_path("BRIDGE_LOG_DIR", data_dir / "logs", base),
             stable_seconds=_get_float("BRIDGE_STABLE_SECONDS", 2.0),
             poll_interval=_get_float("BRIDGE_POLL_INTERVAL", 1.0),
             rescan_interval=_get_float("BRIDGE_RESCAN_INTERVAL", 30.0),
             extensions=extensions,
-            inbox_retention_days=_get_int("BRIDGE_INBOX_RETENTION_DAYS", 15),
+            watch_retention_days=_get_int("WATCH_RETENTION_DAYS", 15),
             purge_interval=_get_float("BRIDGE_PURGE_INTERVAL", 3600.0),
             base_backoff=_get_float("BRIDGE_BASE_BACKOFF", 5.0),
             max_backoff=_get_float("BRIDGE_MAX_BACKOFF", 300.0),
@@ -236,6 +265,14 @@ class Config:
             registrar_backend=registrar_backend,
             previews_bucket=_get("BRIDGE_PREVIEWS_BUCKET", "crocparc-previews"),
             originals_bucket=_get("BRIDGE_ORIGINALS_BUCKET", "crocparc-originals"),
+            shared_secret=_get("BRIDGE_SHARED_SECRET", ""),
+            ingest_url=_get("BRIDGE_INGEST_URL", ""),
+            r2_endpoint=_get("R2_ENDPOINT", ""),
+            r2_access_key_id=_get("R2_ACCESS_KEY_ID", ""),
+            r2_secret_access_key=_get("R2_SECRET_ACCESS_KEY", ""),
+            fetch_host=_get("BRIDGE_FETCH_HOST", "127.0.0.1"),
+            fetch_port=_get_int("BRIDGE_FETCH_PORT", 8788),
+            http_timeout=_get_float("BRIDGE_HTTP_TIMEOUT", 30.0),
             health_host=_get("BRIDGE_HEALTH_HOST", "127.0.0.1"),
             health_port=_get_int("BRIDGE_HEALTH_PORT", 8787),
             log_level=_get("BRIDGE_LOG_LEVEL", "info").lower(),
@@ -256,11 +293,11 @@ class Config:
 
     def ensure_dirs(self) -> None:
         for directory in (
-            self.inbox_dir,
+            self.watch_dir,
             self.data_dir,
             self.db_path.parent,
             self.work_dir,
-            self.archive_dir,
+            self.originals_dir,
             self.output_dir,
             self.log_dir,
         ):

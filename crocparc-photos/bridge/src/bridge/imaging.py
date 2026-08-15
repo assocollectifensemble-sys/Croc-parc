@@ -15,6 +15,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+import piexif
 from PIL import ExifTags, Image, ImageDraw, ImageFont, ImageOps
 
 from .models import ImageMetadata, Watermark
@@ -190,6 +191,38 @@ def make_thumbnail(
     watermark: Watermark,
 ) -> tuple[int, int]:
     return _derive(image, destination, max_edge, quality, watermark)
+
+
+def strip_gps(path: Path) -> bool:
+    """Retire les coordonnees GPS d'un JPEG sans retoucher un seul pixel.
+
+    Seul le bloc de metadonnees (segment APP1) est reecrit : l'image n'est pas
+    redecodee ni recompressee, la qualite est donc rigoureusement identique.
+    Retourne True si des coordonnees ont ete retirees.
+
+    Pourquoi : le boitier n'a pas de puce GPS, mais appaire au telephone avec la
+    synchronisation de position, chaque photo repart avec les coordonnees du
+    lieu de prise de vue. Les previews n'embarquent deja aucune metadonnee ;
+    l'original vendu au client n'a aucune raison de transporter la position
+    exacte d'un enfant.
+    """
+    try:
+        exif = piexif.load(str(path))
+    except Exception as exc:  # fichier sans EXIF exploitable
+        log.debug("EXIF illisible, rien a nettoyer", extra={"file": path.name, "error": str(exc)})
+        return False
+    if not exif.get("GPS"):
+        return False
+    exif["GPS"] = {}
+    # La vignette EXIF n'est pas indispensable et complique la reecriture.
+    exif.pop("thumbnail", None)
+    exif["1st"] = {}
+    try:
+        piexif.insert(piexif.dump(exif), str(path))
+    except Exception as exc:  # pragma: no cover - JPEG exotique
+        raise ImageError(f"nettoyage GPS impossible sur {path.name} : {exc}") from exc
+    log.info("coordonnees GPS retirees de l'original", extra={"file": path.name})
+    return True
 
 
 def copy_verified(source: Path, destination: Path) -> str:

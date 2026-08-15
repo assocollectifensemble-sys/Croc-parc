@@ -3,26 +3,50 @@
 Chaine de vente des photos de visite : Sony A7 IV -> FTP -> tri automatique par
 carte QR -> stockage -> galerie web -> paiement.
 
-Ce depot est construit par phases. **La phase A est livree** : le pont local
-fonctionne de bout en bout, sans aucun compte cloud.
+Ce depot est construit par phases. **Les phases A et B sont livrees** : le pont
+local trie et fabrique les previews, les depose sur R2 et declare les sessions
+dans D1. Rien de tout cela n'exige de compte cloud pour etre teste.
 
 | Phase | Contenu | Etat |
 |---|---|---|
 | A | Pont local : surveillance FTP, cartes QR, previews filigranees, file SQLite | **livree** |
-| B | R2 + D1 + `POST /api/ingest` | a venir |
+| B | R2 + D1 + `POST /api/ingest` + `POST /fetch-original` | **livree** |
 | C | Galerie PWA | a venir |
 | D | Stripe Checkout et telechargements | a venir |
 | E | Admin, purge a 30 jours, webhook Make, planches de cartes | a venir |
 
 ```
 crocparc-photos/
-├── bridge/               # service Python installe sur le mini-PC du parc
-│   ├── src/bridge/       # config, watcher, qr, imaging, queue, uploader, processor
-│   ├── tests/            # pytest ; les JPEG de test sont generes par les tests
-│   └── .env.example      # toutes les variables, commentees
+├── bridge/                  # service Python installe sur le mini-PC du parc
+│   ├── src/bridge/          # config, watcher, qr, imaging, queue, uploader,
+│   │                        # processor, signing, fetch_original, health
+│   ├── tests/               # pytest ; les JPEG de test sont generes par les tests
+│   └── .env.example         # toutes les variables, commentees
+├── functions/               # Cloudflare Pages Functions (TypeScript)
+│   ├── _lib/signing.ts      # HMAC partage avec le pont
+│   ├── api/ingest.ts        # POST /api/ingest
+│   └── __tests__/           # vitest, sur le SQL reel des migrations
+├── db/migrations/           # schema D1
+├── web/                     # front statique (phase C)
 └── tools/
-    └── simulate-drop.py  # fabrique une fausse matinee de prise de vue
+    └── simulate-drop.py     # fabrique une fausse matinee de prise de vue
 ```
+
+## Ou vivent les fichiers
+
+C'est le point qui structure tout le reste. Un JPEG du A7 IV pese 10 a 20 Mo :
+monter chaque original sur R2 viderait le palier gratuit en deux jours.
+
+| Fichier | Taille | Ou il vit |
+|---|---|---|
+| Preview filigranee 2048 px | ~600 Ko | R2, bucket public `crocparc-previews` |
+| Vignette filigranee 512 px | ~80 Ko | R2, meme bucket |
+| Original pleine resolution | 10-20 Mo | **au parc**, dans `ORIGINALS_DIR` |
+
+L'original ne quitte le parc que vendu : apres paiement, le webhook Stripe
+appelle `POST /fetch-original` sur le pont, qui pousse alors ce fichier precis
+dans le bucket prive. Effet de bord appreciable : tant que personne n'a paye,
+aucune photo pleine resolution n'existe hors du parc.
 
 ## Le pont, en deux minutes
 
@@ -50,21 +74,60 @@ Rien n'est garde en memoire. Un redemarrage reprend exactement ou la file en
 etait ; une coupure reseau de quatre heures se rattrape toute seule, avec un
 backoff exponentiel plafonne a 5 minutes.
 
-## Installation sur le mini-PC
+## Installation sur le mini-PC (Windows)
 
-Python 3.11 ou plus, et la bibliotheque systeme de zbar (pyzbar est un simple
-liant vers elle).
+Le pont tourne sur Windows, a cote de FileZilla Server. Python 3.11 ou plus
+suffit : la DLL de zbar est fournie avec pyzbar, il n'y a rien d'autre a
+installer.
+
+```bat
+cd bridge
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e ".[dev,cloud]"
+```
+
+Sous Linux ou macOS (developpement), zbar doit etre installe a part :
 
 ```bash
-# Debian / Ubuntu
-sudo apt-get install -y python3-venv libzbar0
-# Windows : rien a installer, la DLL est fournie avec pyzbar
-# macOS : brew install zbar
+sudo apt-get install -y python3-venv libzbar0   # Debian / Ubuntu
+brew install zbar                                # macOS
+```
 
-cd bridge
-python3 -m venv .venv
-source .venv/bin/activate          # Windows : .venv\Scripts\activate
-pip install -e ".[dev]"
+### FileZilla Server
+
+Creer un utilisateur dedie a l'appareil photo, dont le dossier racine est
+`C:\crocparc\ftp-in`, avec les droits d'ecriture uniquement. Le pont surveille
+ce dossier **et ses sous-dossiers** : le boitier peut y creer une arborescence
+par date sans que rien ne soit a changer.
+
+### Demarrage automatique
+
+Le pont doit repartir apres un redemarrage de Windows, sans personne pour
+cliquer. Deux solutions, dans l'ordre de preference :
+
+**NSSM** (vrai service Windows, redemarre en cas de plantage) :
+
+```bat
+nssm install CrocParcBridge C:\crocparc\bridge\.venv\Scripts\python.exe "-m bridge run"
+nssm set CrocParcBridge AppDirectory C:\crocparc\bridge
+nssm set CrocParcBridge AppStdout C:\crocparc\logs\service.log
+nssm set CrocParcBridge AppStderr C:\crocparc\logs\service.log
+nssm set CrocParcBridge Start SERVICE_AUTO_START
+nssm start CrocParcBridge
+```
+
+**Tache planifiee** (sans logiciel supplementaire) : Planificateur de taches,
+nouvelle tache, declencheur « Au demarrage de l'ordinateur », action
+`C:\crocparc\bridge\.venv\Scripts\python.exe` avec les arguments `-m bridge run`
+et le dossier de depart `C:\crocparc\bridge`. Cocher « Executer meme si
+l'utilisateur n'est pas connecte » et, dans l'onglet Parametres, « Redemarrer en
+cas d'echec toutes les 1 minute ».
+
+Dans les deux cas, verifier apres un redemarrage :
+
+```bat
+curl http://localhost:8787/health
 ```
 
 ## Configuration
@@ -77,7 +140,7 @@ cp .env.example .env
 $EDITOR .env
 ```
 
-Seule `BRIDGE_INBOX_DIR` est obligatoire : le dossier ou le FTP depose les JPEG.
+Seule `WATCH_DIR` est obligatoire : le dossier ou le FTP depose les JPEG.
 Tout le reste a une valeur par defaut raisonnable. Les variables deja presentes
 dans l'environnement du systeme l'emportent sur le fichier, ce qui permet de
 surcharger un reglage sans editer `.env`.
@@ -86,19 +149,28 @@ Les reglages les plus utiles :
 
 | Variable | Defaut | Role |
 |---|---|---|
-| `BRIDGE_INBOX_DIR` | — | dossier surveille (cible du FTP) |
+| `WATCH_DIR` | — | dossier surveille, cible du FTP (`C:/crocparc/ftp-in`) |
+| `ORIGINALS_DIR` | `./data/originals` | archive des originaux pleine resolution |
 | `BRIDGE_DATA_DIR` | `./data` | file SQLite, archives, previews, journaux |
 | `BRIDGE_STABLE_SECONDS` | `2.0` | duree sans changement de taille avant traitement |
 | `PREVIEW_MAX_EDGE` / `PREVIEW_QUALITY` | `2048` / `82` | preview filigranee |
 | `THUMB_MAX_EDGE` / `THUMB_QUALITY` | `512` / `75` | vignette |
 | `WATERMARK_TEXT` / `WATERMARK_OPACITY` | `CROC PARC` / `0.65` | texte et opacite du filigrane |
 | `WATERMARK_SCALE` / `WATERMARK_SPACING` | `0.06` / `0.85` | taille du texte (fraction du bord court) et densite du maillage |
-| `BRIDGE_INBOX_RETENTION_DAYS` | `15` | effacement des originaux de l'inbox une fois archives (0 = jamais) |
+| `WATCH_RETENTION_DAYS` | `15` | effacement des originaux de l'inbox une fois archives (0 = jamais) |
 | `SESSION_TTL_DAYS` | `30` | duree de vie d'une session |
 | `BRIDGE_TZ_OFFSET` | `+04:00` | La Reunion, pas d'heure d'ete |
 | `BRIDGE_STORAGE_BACKEND` | `local` | `local` en phase A, `r2` en phase B |
 | `BRIDGE_REGISTRAR_BACKEND` | `none` | `none` en phase A, `api` en phase B |
 | `BRIDGE_HEALTH_PORT` | `8787` | compteurs de supervision |
+| `BRIDGE_SHARED_SECRET` | — | secret HMAC partage avec les Functions (32 car. min) |
+| `BRIDGE_INGEST_URL` | — | URL de `POST /api/ingest` |
+| `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | — | identifiants R2 |
+| `BRIDGE_FETCH_PORT` | `8788` | port de `POST /fetch-original` |
+
+Le pont refuse de demarrer si `BRIDGE_STORAGE_BACKEND=r2` sans identifiants R2,
+si `BRIDGE_REGISTRAR_BACKEND=api` sans URL ni secret, ou si le secret fait moins
+de 32 caracteres. Mieux vaut un refus au demarrage qu'une session perdue.
 
 ## Utilisation
 
@@ -155,6 +227,78 @@ WantedBy=multi-user.target
 `Restart=always` est sans danger : la reprise apres coupure est testee, aucun
 doublon n'est cree.
 
+## Cote Cloudflare
+
+### Premiere mise en place
+
+```bash
+npm install
+
+# Base de donnees : reporter l'identifiant retourne dans wrangler.toml
+npx wrangler d1 create crocparc-photos
+npx wrangler d1 migrations apply crocparc-photos --remote
+
+# Buckets. Seul le premier est en lecture publique.
+npx wrangler r2 bucket create crocparc-previews
+npx wrangler r2 bucket create crocparc-originals
+
+# Secret partage : la meme valeur que BRIDGE_SHARED_SECRET cote pont
+npx wrangler pages secret put BRIDGE_SHARED_SECRET
+```
+
+### Developpement local
+
+`wrangler` fait tourner les Functions dans le vrai moteur Cloudflare, avec une
+base D1 locale. Aucun compte n'est necessaire.
+
+```bash
+npx wrangler d1 migrations apply crocparc-photos --local
+echo "BRIDGE_SHARED_SECRET=un-secret-de-developpement-de-32-caracteres" > .dev.vars
+npx wrangler pages dev --port 8976
+```
+
+Le pont peut alors viser cette instance :
+
+```bash
+cd bridge
+WATCH_DIR=./data/inbox \
+BRIDGE_REGISTRAR_BACKEND=api \
+BRIDGE_INGEST_URL=http://localhost:8976/api/ingest \
+BRIDGE_SHARED_SECRET=un-secret-de-developpement-de-32-caracteres \
+python -m bridge once
+```
+
+### Exposer `/fetch-original`
+
+Le webhook Stripe doit pouvoir joindre le mini-PC pour reclamer un original
+vendu. Plutot qu'ouvrir un port sur le routeur du parc, un tunnel Cloudflare
+sort du reseau vers Cloudflare, sans adresse IP publique ni redirection :
+
+```bash
+cloudflared tunnel create crocparc-bridge
+cloudflared tunnel route dns crocparc-bridge pont.crocparc.re
+# config.yml : service http://127.0.0.1:8788
+cloudflared service install     # demarrage automatique avec Windows
+```
+
+L'endpoint reste authentifie par HMAC : le tunnel ne remplace pas la signature,
+il evite seulement d'exposer la machine.
+
+### Securite du contrat
+
+- `POST /api/ingest` et `POST /fetch-original` partagent le meme secret et le
+  meme schema : on signe `horodatage.corps_brut`, jamais le corps seul. Sans
+  cela, l'horodatage pourrait etre remplace sans invalider la signature et la
+  fenetre de 5 minutes ne protegerait plus de rien.
+- La comparaison des signatures passe par `crypto.subtle.verify` cote Function
+  et `hmac.compare_digest` cote pont : a temps constant des deux cotes.
+- `/fetch-original` n'accepte que des chemins relatifs, refuse `..`, les chemins
+  absolus, les lettres de lecteur et les liens symboliques qui sortiraient de
+  `ORIGINALS_DIR`.
+- Les deux implementations de la signature sont verrouillees par un vecteur de
+  test commun, present dans `bridge/tests/test_signing.py` et
+  `functions/__tests__/signing.test.ts`. Si l'une devie, un des deux tests tombe.
+
 ## Rejouer le critere d'acceptation de la phase A
 
 > On depose 30 JPEG dont 3 cartes dans le dossier surveille, et on obtient
@@ -171,32 +315,49 @@ Resultat attendu (verifie sur cette machine) :
 ```
 data/out/crocparc-previews/AAAA-MM-JJ/<CODE>/DSCxxxxx_p.jpg   27 previews 2048 px
 data/out/crocparc-previews/AAAA-MM-JJ/<CODE>/DSCxxxxx_t.jpg   27 vignettes 512 px
-data/out/crocparc-originals/AAAA-MM-JJ/<CODE>/DSCxxxxx.JPG    27 originaux
-data/originals/AAAA-MM-JJ/<CODE>/                             archive locale
+data/originals/AAAA-MM-JJ/<CODE>/DSCxxxxx.JPG                 27 originaux archives
 data/originals/cards/AAAA-MM-JJ/                              photos des cartes, hors ligne
 ```
 
 Les 3 photos de cartes n'apparaissent nulle part dans la sortie publiable, et
-les originaux sont identiques aux fichiers d'origine :
+les originaux archives sont identiques aux fichiers d'origine :
 
 ```bash
 cd bridge/data
-for f in out/crocparc-originals/*/*/*.JPG; do
+for f in originals/*/*/*.JPG; do
   md5sum -c <<< "$(md5sum inbox/$(basename $f) | cut -d' ' -f1)  $f"
 done
 ```
 
+(Une photo qui portait des coordonnees GPS fait exception : son bloc de
+metadonnees a ete reecrit, ses pixels sont inchanges. Le pont le signale par un
+evenement `gps_removed` dans `python -m bridge status`.)
+
 ## Tests
 
 ```bash
-cd bridge && python -m pytest -q
+cd bridge && python -m pytest -q     # le pont
+npm test                             # les Functions
 ```
 
 Aucun binaire n'est versionne : chaque test fabrique ses propres JPEG, cartes QR
-comprises. Les tests couvrent notamment la detection de fichier stable, le JPEG
+comprises. Cote pont, les tests couvrent la detection de fichier stable, le JPEG
 tronque, le redemarrage en cours de lot, la coupure reseau de quatre heures, les
-photos arrivees avant toute carte, deux cartes consecutives et la carte arrivee
-apres ses photos.
+photos arrivees avant toute carte, deux cartes consecutives, la carte arrivee
+apres ses photos, la purge, le nettoyage GPS, le depot R2 (contre un vrai
+serveur S3 simule) et le cloisonnement de `/fetch-original`.
+
+Cote Functions, les tests s'executent contre le **SQL reel des migrations**,
+adosse au SQLite natif de Node : idempotence de `/api/ingest`, refus des
+signatures et des horodatages invalides, validation des codes et des chemins.
+
+La verification finale se fait sur le vrai moteur Cloudflare :
+
+```bash
+npx wrangler pages dev --port 8976    # d'un cote
+cd bridge && ... python -m bridge once # de l'autre (voir plus haut)
+npx wrangler d1 execute crocparc-photos --local --command "SELECT * FROM sessions"
+```
 
 ## Choix a connaitre
 
@@ -218,6 +379,29 @@ apres ses photos.
   traitee comme une photo ordinaire et rejoint la session precedente. C'est
   visible en admin par un nombre de photos anormal ; il n'existe pas de moyen
   fiable de deviner qu'une photo *voulait* etre une carte.
+- **GPS** : le boitier n'a pas de puce GPS, mais appaire au telephone avec la
+  synchronisation de position, chaque photo repart avec les coordonnees du lieu.
+  Les previews n'embarquent aucune metadonnee ; l'original vendu est nettoye de
+  ses coordonnees **sans etre recompresse** (seul le bloc EXIF est reecrit, les
+  pixels sont bit a bit identiques).
+- **Numero d'inventaire des cartes** : le QR n'encode que l'URL de galerie. Le
+  numero a 4 chiffres imprime sur la carte peut etre resolu par un CSV
+  `code,card_number` (`CARDS_INVENTORY_CSV`), ou voyager dans l'URL (`?n=427`).
+  Les deux voies existent et aucune n'est obligatoire : le champ reste vide si
+  la photographe n'en a pas l'usage.
+
+## Questions terrain a trancher avec la photographe
+
+- Le geste change : elle **photographie la carte** avant chaque groupe, au lieu
+  de noter le numero de la premiere photo. Plus rapide, mais c'est une habitude
+  a prendre.
+- **Une carte par jour maximum.** Deux groupes servis avec la meme carte le meme
+  jour partagent la meme galerie, et chacun voit les photos de l'autre. Le pont
+  leve une alerte `card_reused`, mais il ne peut pas les separer : le code est
+  le seul identifiant que le visiteur possede.
+- A-t-elle besoin du **numero d'inventaire a 4 chiffres** sur les cartes pour
+  suivre son stock, ou le code visible (`K7M2QP`) lui suffit-il ? Si le code
+  suffit, on supprime le champ.
 
 ## Reglages du Sony A7 IV (memo)
 

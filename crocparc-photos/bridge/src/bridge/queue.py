@@ -8,6 +8,7 @@ en etait, une coupure reseau de plusieurs heures se rattrape toute seule.
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 import threading
 import uuid
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS files (
   session_id      TEXT,
   preview_key     TEXT,
   thumb_key       TEXT,
-  original_key    TEXT,
+  original_path    TEXT,
   sha1            TEXT,
   attempts        INTEGER NOT NULL DEFAULT 0,
   next_attempt_at REAL NOT NULL DEFAULT 0,
@@ -73,6 +74,17 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_day ON events(day, kind);
 """
+
+
+def path_key(path: Path) -> str:
+    """Cle stable d'un fichier dans la file.
+
+    Windows est insensible a la casse et melange les separateurs : le meme
+    fichier peut arriver en `C:\\crocparc\\ftp-in\\DSC1.JPG` par watchdog et en
+    `c:/crocparc/ftp-in/DSC1.JPG` par le balayage. Sans normalisation, deux
+    lignes pour un seul fichier -- donc un doublon.
+    """
+    return os.path.normcase(os.path.abspath(str(path)))
 
 
 def utcnow_iso() -> str:
@@ -122,7 +134,7 @@ class Queue:
         redemarrage ou un rebalayage ne cree pas de doublon.
         """
         now = utcnow_iso()
-        key = str(path)
+        key = path_key(path)
         with self._write_lock:
             row = self.conn.execute(
                 "SELECT state, size FROM files WHERE path = ?", (key,)
@@ -170,7 +182,7 @@ class Queue:
 
     def get(self, path: Path) -> FileRow | None:
         row = self.conn.execute(
-            "SELECT * FROM files WHERE path = ?", (str(path),)
+            "SELECT * FROM files WHERE path = ?", (path_key(path),)
         ).fetchone()
         return FileRow.from_sqlite(row) if row else None
 
@@ -216,7 +228,7 @@ class Queue:
         ]
         with self._write_lock:
             self.conn.execute(
-                f"UPDATE files SET {assignments} WHERE path = ?", (*values, str(path))
+                f"UPDATE files SET {assignments} WHERE path = ?", (*values, path_key(path))
             )
             self.conn.commit()
 
@@ -232,7 +244,7 @@ class Queue:
         """Compte l'echec et reporte la prochaine tentative (backoff exponentiel)."""
         with self._write_lock:
             row = self.conn.execute(
-                "SELECT attempts FROM files WHERE path = ?", (str(path),)
+                "SELECT attempts FROM files WHERE path = ?", (path_key(path),)
             ).fetchone()
             attempts = (row["attempts"] if row else 0) + 1
             delay = min(base_backoff * (2 ** (attempts - 1)), max_backoff)
@@ -251,7 +263,7 @@ class Queue:
                     quarantined,
                     FileState.FAILED.value,
                     utcnow_iso(),
-                    str(path),
+                    path_key(path),
                 ),
             )
             self.conn.commit()
@@ -268,7 +280,7 @@ class Queue:
                     utcnow_iso(),
                     date.today().isoformat(),
                     kind,
-                    str(path) if path else None,
+                    path_key(path) if path else None,
                     message[:500],
                 ),
             )
@@ -415,7 +427,7 @@ class Queue:
                AND path != ?
              ORDER BY shot_at
             """,
-            (code, day, str(exclude_path)),
+            (code, day, path_key(exclude_path)),
         ).fetchall()
         return [FileRow.from_sqlite(row) for row in rows]
 
@@ -449,7 +461,7 @@ class Queue:
             SELECT 1 FROM files
              WHERE session_id = ? AND filename = ? AND path != ? AND is_card = 0
             """,
-            (session_id, filename, str(exclude_path)),
+            (session_id, filename, path_key(exclude_path)),
         ).fetchone()
         return row is not None
 

@@ -135,7 +135,7 @@ def config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Config:
     for name in list(__import__("os").environ):
         if name.startswith(("BRIDGE_", "PREVIEW_", "THUMB_", "WATERMARK_", "QR_", "GALLERY_", "SESSION_", "CARDS_")):
             monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("BRIDGE_INBOX_DIR", str(tmp_path / "inbox"))
+    monkeypatch.setenv("WATCH_DIR", str(tmp_path / "inbox"))
     monkeypatch.setenv("BRIDGE_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("BRIDGE_STABLE_SECONDS", "2.0")
     monkeypatch.setenv("BRIDGE_TZ_OFFSET", "+04:00")

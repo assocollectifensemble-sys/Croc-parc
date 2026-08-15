@@ -1,0 +1,20 @@
+{
+  "name": "crocparc-photos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Galerie et vente des photos de visite du Croc Parc",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler pages dev web --d1 DB=crocparc-photos",
+    "db:local": "wrangler d1 migrations apply crocparc-photos --local",
+    "db:remote": "wrangler d1 migrations apply crocparc-photos --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260815.1",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.0.0"
+  }
+}

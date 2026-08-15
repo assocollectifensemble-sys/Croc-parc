@@ -22,6 +22,7 @@ from .imaging import (
     make_thumbnail,
     open_oriented,
     read_metadata,
+    strip_gps,
 )
 from .models import FileRow, FileState, SessionRow, SessionStatus
 from .qr import ORPHAN_CODE, detect_card, load_inventory
@@ -153,17 +154,6 @@ class Processor:
             card = detect_card(image, self.config.qr_scan_max_edge)
 
         shot_at = self._shot_at_iso(metadata.shot_at, row.path)
-        if metadata.has_gps:
-            log.warning(
-                "coordonnees GPS presentes dans l'original",
-                extra={"file": row.filename},
-            )
-            self.queue.record_event(
-                "gps_present",
-                f"{row.filename}: GPS present dans l'original (retire des previews)",
-                row.path,
-            )
-
         fields = {
             "state": FileState.ANALYZED,
             "shot_at": shot_at,
@@ -201,7 +191,7 @@ class Processor:
             opened_at=row.shot_at,
         )
         destination = (
-            self.config.archive_dir / "cards" / session_date / f"{row.code}-{row.filename}"
+            self.config.originals_dir / "cards" / session_date / f"{row.code}-{row.filename}"
         )
         sha1 = copy_verified(row.path, destination)
         self._warn_if_card_reused(row, session_date)
@@ -221,7 +211,7 @@ class Processor:
 
         preview_key = f"{prefix}/{stem}_p.jpg"
         thumb_key = f"{prefix}/{stem}_t.jpg"
-        original_key = f"{prefix}/{filename}"
+        original_path = f"{prefix}/{filename}"  # relatif a ORIGINALS_DIR, en slashs
 
         with open_oriented(row.path) as image:
             width, height = make_preview(
@@ -239,9 +229,19 @@ class Processor:
                 self.config.watermark,
             )
 
-        # Archive locale de l'original, copie verifiee par empreinte.
-        archive_path = self.config.archive_dir / session.session_date / session.code / filename
+        # Archive locale de l'original, copie verifiee par empreinte. C'est elle
+        # qui fait foi : le fichier de l'inbox sera efface au bout de 15 jours.
+        archive_path = self.config.originals_dir / session.session_date / session.code / filename
         sha1 = copy_verified(row.path, archive_path)
+        if strip_gps(archive_path):
+            # Les pixels sont intacts, seul le bloc de metadonnees a change :
+            # l'empreinte de reference devient celle de l'archive nettoyee.
+            sha1 = sha1_of(archive_path)
+            self.queue.record_event(
+                "gps_removed",
+                f"{filename}: coordonnees GPS retirees de l'original",
+                row.path,
+            )
 
         self.queue.update(
             row.path,
@@ -250,7 +250,7 @@ class Processor:
             filename=filename,
             preview_key=preview_key,
             thumb_key=thumb_key,
-            original_key=original_key,
+            original_path=original_path,
             width=width,
             height=height,
             sha1=sha1,
@@ -268,14 +268,14 @@ class Processor:
 
     def _upload(self, row: FileRow, now: float) -> bool:
         """Depose previews et original sur le stockage objet (local en phase A)."""
-        assert row.session_id and row.preview_key and row.thumb_key and row.original_key
-        archive_path = self._archive_path(row)
-        assert archive_path is not None
+        assert row.session_id and row.preview_key and row.thumb_key and row.original_path
         preview = self.config.work_dir / row.preview_key
         thumb = self.config.work_dir / row.thumb_key
+        # Seuls les derives montent sur R2 : ~750 Ko au lieu de 15 Mo par photo.
+        # L'original reste au parc et ne partira qu'une fois vendu, sur demande
+        # du webhook Stripe via POST /fetch-original.
         self.storage.put(preview, self.config.previews_bucket, row.preview_key)
         self.storage.put(thumb, self.config.previews_bucket, row.thumb_key)
-        self.storage.put(archive_path, self.config.originals_bucket, row.original_key)
         self.queue.update(row.path, state=FileState.UPLOADED)
         self.queue.clear_error(row.path)
         self.queue.refresh_photo_count(row.session_id)
@@ -294,12 +294,12 @@ class Processor:
             return None
         if row.is_card:
             return (
-                self.config.archive_dir
+                self.config.originals_dir
                 / "cards"
                 / session.session_date
                 / f"{session.code}-{row.filename}"
             )
-        return self.config.archive_dir / session.session_date / session.code / row.filename
+        return self.config.originals_dir / session.session_date / session.code / row.filename
 
     def _register_uploaded(self, now: float) -> int:
         """Declare les photos deposees, groupees par session (contrat /api/ingest)."""
@@ -421,11 +421,11 @@ class Processor:
         son empreinte doit correspondre a celle enregistree au traitement. Un
         doute, et le fichier reste.
         """
-        if self.config.inbox_retention_days <= 0:
+        if self.config.watch_retention_days <= 0:
             return 0
         now = time.time() if now is None else now
         horizon = datetime.fromtimestamp(now).astimezone() - timedelta(
-            days=self.config.inbox_retention_days
+            days=self.config.watch_retention_days
         )
         limite = horizon.isoformat(timespec="seconds")
 
@@ -456,7 +456,7 @@ class Processor:
         if efface:
             log.info(
                 "inbox purgee",
-                extra={"count": efface, "retention_days": self.config.inbox_retention_days},
+                extra={"count": efface, "retention_days": self.config.watch_retention_days},
             )
             self.queue.record_event("purge", f"{efface} fichier(s) efface(s) de l'inbox")
         return efface
@@ -475,7 +475,7 @@ class Processor:
                     session_id=None,
                     preview_key=None,
                     thumb_key=None,
-                    original_key=None,
+                    original_path=None,
                 )
                 log.info(
                     "photo rerangee apres arrivee tardive de la carte",

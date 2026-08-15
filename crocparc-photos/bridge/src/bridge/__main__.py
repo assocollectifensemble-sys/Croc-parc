@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 from .config import Config, ConfigError
+from .fetch_original import FetchServer
 from .health import AlreadyRunning, HealthServer, snapshot
 from .logging_setup import setup_logging
 from .models import FileState
@@ -49,6 +50,15 @@ def cmd_run(config: Config) -> int:
         return 3
     observer = start_observer(config, queue)
 
+    # L'endpoint des originaux vendus ne demarre que si un secret est configure :
+    # sans secret, il serait ouvert a tout le monde.
+    fetch: FetchServer | None = None
+    if config.shared_secret:
+        fetch = FetchServer(config, processor.storage)
+        fetch.start()
+    else:
+        log.info("endpoint /fetch-original desactive (BRIDGE_SHARED_SECRET absent)")
+
     stop = threading.Event()
 
     def handle_signal(signum, _frame) -> None:
@@ -63,8 +73,8 @@ def cmd_run(config: Config) -> int:
     log.info(
         "pont demarre",
         extra={
-            "inbox": str(config.inbox_dir),
-            "retention_days": config.inbox_retention_days,
+            "inbox": str(config.watch_dir),
+            "retention_days": config.watch_retention_days,
         },
     )
 
@@ -82,6 +92,8 @@ def cmd_run(config: Config) -> int:
     finally:
         observer.stop()
         observer.join(timeout=5)
+        if fetch is not None:
+            fetch.stop()
         health.stop()
         queue.close()
         log.info("pont arrete")
@@ -108,7 +120,7 @@ def cmd_purge(config: Config) -> int:
     efface = processor.purge_inbox()
     print(
         f"{efface} fichier(s) efface(s) de l'inbox "
-        f"(retention : {config.inbox_retention_days} jours)"
+        f"(retention : {config.watch_retention_days} jours)"
     )
     queue.close()
     return 0

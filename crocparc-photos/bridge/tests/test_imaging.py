@@ -12,6 +12,7 @@ from PIL import ExifTags, Image
 from bridge.models import Watermark
 from bridge.imaging import (
     ImageError,
+    strip_gps,
     apply_watermark,
     copy_verified,
     make_preview,
@@ -137,3 +138,36 @@ def test_copie_ne_laisse_pas_de_fichier_partiel(tmp_path, monkeypatch):
         copy_verified(source, destination)
     assert not destination.exists()
     assert not destination.with_name(destination.name + ".part").exists()
+
+
+def test_nettoyage_gps_sans_toucher_aux_pixels(tmp_path):
+    """Seul le bloc de metadonnees est reecrit : l'image n'est pas recompressee."""
+    chemin = make_photo(
+        tmp_path / "DSC01245.JPG", datetime(2026, 10, 15, 10, 32, 14), seed=11, gps=True
+    )
+    with Image.open(chemin) as image:
+        pixels_avant = hashlib.md5(image.tobytes()).hexdigest()
+    assert read_metadata(chemin).has_gps is True
+
+    assert strip_gps(chemin) is True
+
+    apres = read_metadata(chemin)
+    assert apres.has_gps is False
+    assert apres.shot_at == datetime(2026, 10, 15, 10, 32, 14)  # la date survit
+    with Image.open(chemin) as image:
+        assert hashlib.md5(image.tobytes()).hexdigest() == pixels_avant
+
+
+def test_nettoyage_gps_idempotent(tmp_path):
+    chemin = make_photo(tmp_path / "DSC01246.JPG", seed=12, gps=True)
+    assert strip_gps(chemin) is True
+    empreinte = md5(chemin)
+    assert strip_gps(chemin) is False  # deuxieme passage : rien a faire
+    assert md5(chemin) == empreinte    # et rien de reecrit
+
+
+def test_nettoyage_gps_sans_gps_ne_touche_rien(tmp_path):
+    chemin = make_photo(tmp_path / "DSC01247.JPG", datetime(2026, 10, 15, 10, 0), seed=13)
+    empreinte = md5(chemin)
+    assert strip_gps(chemin) is False
+    assert md5(chemin) == empreinte

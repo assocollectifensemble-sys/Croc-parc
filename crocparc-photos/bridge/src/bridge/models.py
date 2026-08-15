@@ -99,7 +99,7 @@ class FileRow:
     session_id: str | None = None
     preview_key: str | None = None
     thumb_key: str | None = None
-    original_key: str | None = None
+    original_path: str | None = None
     sha1: str | None = None
     attempts: int = 0
     next_attempt_at: float = 0.0
@@ -123,7 +123,7 @@ class FileRow:
             session_id=row["session_id"],
             preview_key=row["preview_key"],
             thumb_key=row["thumb_key"],
-            original_key=row["original_key"],
+            original_path=row["original_path"],
             sha1=row["sha1"],
             attempts=row["attempts"],
             next_attempt_at=row["next_attempt_at"],

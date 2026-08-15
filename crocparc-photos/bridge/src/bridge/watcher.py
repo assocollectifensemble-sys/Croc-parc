@@ -42,10 +42,10 @@ def is_candidate(path: Path, extensions: tuple[str, ...]) -> bool:
 def scan_inbox(config: Config, queue: Queue) -> int:
     """Inscrit dans la file tout fichier candidat present dans l'inbox."""
     discovered = 0
-    if not config.inbox_dir.is_dir():
-        log.warning("inbox absente", extra={"inbox": str(config.inbox_dir)})
+    if not config.watch_dir.is_dir():
+        log.warning("inbox absente", extra={"inbox": str(config.watch_dir)})
         return 0
-    for path in sorted(config.inbox_dir.rglob("*")):
+    for path in sorted(config.watch_dir.rglob("*")):
         if not is_candidate(path, config.extensions):
             continue
         try:
@@ -90,7 +90,7 @@ class InboxHandler(FileSystemEventHandler):
 
 def start_observer(config: Config, queue: Queue) -> Observer:
     observer = Observer()
-    observer.schedule(InboxHandler(config, queue), str(config.inbox_dir), recursive=True)
+    observer.schedule(InboxHandler(config, queue), str(config.watch_dir), recursive=True)
     observer.start()
-    log.info("surveillance demarree", extra={"inbox": str(config.inbox_dir)})
+    log.info("surveillance demarree", extra={"inbox": str(config.watch_dir)})
     return observer
