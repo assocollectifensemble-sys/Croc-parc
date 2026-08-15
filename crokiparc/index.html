@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🐊 Croc Parc</title>
+<meta name="description" content="Chasse au trésor géolocalisée au CrocParc, avec Croki le crocodile !">
+<meta name="theme-color" content="#1b4d2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" href="assets/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- DÉCOR DE SCÈNE VIVANT (change selon l'étape) -->
+<div id="scene-bg">
+  <div class="sun-glow"></div>
+  <span class="jungle-frame tl">🌿</span>
+  <span class="jungle-frame tr">🌴</span>
+  <span class="jungle-frame bl">🍃</span>
+  <span class="jungle-frame br">🌿</span>
+  <div id="scene-motifs"></div>
+</div>
+<div id="particles"></div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <img src="assets/img/croki-splash.webp" class="splash-logo" alt="Croki">
+  <div class="splash-titre">Croc Parc 🐊</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+</div>
+
+<!-- ============ ÉCRAN REPRISE ============ -->
+<section id="screen-resume" class="screen">
+  <div class="hero-croki"><img src="assets/img/croki-victoire-peace.webp" class="croki-img bounce" alt="Croki"></div>
+  <div class="card" style="text-align:center">
+    <h2 class="reprise-titre">👋 Content de te revoir !</h2>
+    <p class="reprise-txt" id="reprise-txt"></p>
+    <button class="btn btn-orange" id="btn-reprendre">▶️ Reprendre l'aventure</button>
+    <button class="btn btn-gris" id="btn-recommencer-zero">🔄 Recommencer à zéro</button>
+  </div>
+</section>
+
+<!-- ============ ÉCRAN ACCUEIL (une seule page, droit au but) ============ -->
+<section id="screen-histoire" class="screen">
+  <button class="btn-admin-discret" id="btn-ouvrir-admin" title="Réglages">⚙️</button>
+
+  <div class="hero-croki">
+    <img id="histoire-img" src="assets/img/croki-accueil-salut.webp" class="croki-img dance" alt="Croki">
+  </div>
+
+  <!-- Bandeau d'installation de l'app (PWA), toujours visible, jamais bloquant -->
+  <div class="card install-card" id="bloc-install-app">
+    <div class="install-row">
+      <div class="install-icon">📲</div>
+      <div class="install-txt">
+        <strong>Installe Croc Parc 🐊 sur ton téléphone</strong>
+        <p>Un tap sur l'icône, même sans connexion — comme une vraie appli !</p>
+      </div>
+    </div>
+    <button class="btn btn-vert" id="btn-installer-app" style="display:none">📲 Installer l'application</button>
+    <div class="install-ios-hint" id="bloc-install-ios" style="display:none">
+      📱 Sur iPhone : appuie sur <strong>Partager</strong> (le carré avec la flèche ⬆️) puis <strong>« Sur l'écran d'accueil »</strong>
+    </div>
+    <div class="install-done" id="bloc-install-done" style="display:none">✅ Application installée, bravo !</div>
+  </div>
+
+  <div class="card" id="histoire-card">
+    <div class="bulle-avec-son">
+      <div class="bulle" id="histoire-texte"></div>
+      <button class="btn-ecouter-accueil" id="btn-ecouter-histoire">🔊 Réécouter</button>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">🔊 Voix de Croki</span>
+      <div class="toggle-bg on" id="toggle-voix"><div class="toggle-knob"></div></div>
+    </div>
+  </div>
+
+  <button class="btn btn-orange btn-sticky-cta" id="btn-demarrer">🚀 C'est parti !</button>
+</section>
+
+<!-- ============ ÉCRAN VIDÉO + DÉCOUVERTE DU PARCOURS ============ -->
+<section id="screen-video" class="screen">
+  <div class="hero-croki scene-complete">
+    <div class="video-round" id="histoire-video-wrap">
+      <video id="histoire-video" playsinline poster="assets/img/croki-accueil-salut.webp">
+        <source src="assets/video/intro.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+
+  <div class="card" id="carte-rendezvous" style="text-align:center;display:none">
+    <h2 class="gps-intro-titre" id="txt-rendezvous">Voici la carte !</h2>
+    <p class="gps-intro-txt" id="txt-carte-explication-video">Voici le plan du parc ! Suis les numéros de 1 à 7.</p>
+    <div class="map-wrap" style="margin-bottom:12px">
+      <img src="" id="img-plan-parc-decouverte" class="plan-img" alt="Plan du parc">
+    </div>
+    <p class="rendezvous-panneau" id="txt-rendezvous-panneau">Rendez-vous au panneau n°1 !</p>
+  </div>
+  <button class="btn btn-orange btn-sticky-cta" id="btn-decouvrir-parcours" style="display:none">🚀 En avant l'aventure !</button>
+</section>
+
+<!-- ============ ÉCRAN ÉTAPE ============ -->
+<section id="screen-stage" class="screen">
+  <header class="header">
+    <div>
+      <div class="header-titre">🐊 Croc Parc</div>
+      <div class="header-sub" id="txt-hdr-sub">Étape 1 / 7</div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-icon" id="btn-reecouter" title="Réécouter Croki">🔊</button>
+    </div>
+  </header>
+
+  <!-- Mot CROKI en construction -->
+  <div class="mot-tiles" id="mot-tiles"></div>
+
+  <!-- Vue "en approche" (avant d'être arrivé) : carte TOUJOURS visible -->
+  <div id="bloc-approche">
+    <div class="card map-card-inline">
+      <div class="map-zoom-wrap" id="map-zoom-wrap">
+        <div class="map-wrap" id="map-wrap">
+          <img src="" id="img-plan-parc" class="plan-img" alt="Plan du parc">
+        </div>
+      </div>
+      <div class="map-zoom-btns">
+        <button class="btn-icon" id="btn-zoom-moins" type="button">➖</button>
+        <button class="btn-icon" id="btn-zoom-reset" type="button" title="Voir la carte en plein écran">⛶</button>
+        <button class="btn-icon" id="btn-zoom-plus" type="button">➕</button>
+      </div>
+      <p class="carte-note" id="carte-note">Suis les numéros du plan pour trouver le prochain panneau 👆</p>
+    </div>
+
+    <div class="hero-croki" id="hero-approche"><img src="" id="img-approche" class="croki-img question" alt="Croki"></div>
+    <div class="card" style="text-align:center">
+      <div class="bulle" id="txt-approche-bulle"></div>
+      <p class="approche-hint">Rejoins le prochain panneau numéroté sur la carte !</p>
+    </div>
+    <button class="btn btn-jaune btn-sticky-cta" id="btn-force-arrivee">✅ Je suis arrivé(e) devant le panneau</button>
+  </div>
+
+  <!-- Vue "question" (une fois sur zone) -->
+  <div id="bloc-question" style="display:none">
+    <div class="hero-croki" id="hero-question">
+      <img src="" id="img-question" class="croki-img question" alt="Croki">
+    </div>
+    <div class="card card-zone">
+      <div class="zone-header">
+        <div class="zone-emoji-bg" id="txt-zone-emoji">🐊</div>
+        <div>
+          <div class="zone-num" id="txt-zone-num">Étape 1</div>
+          <div class="zone-nom" id="txt-zone-nom">—</div>
+        </div>
+      </div>
+      <div class="ingredient-tag" id="txt-ing-tag">🎁 —</div>
+      <div class="bulle" id="txt-question-bulle">—</div>
+      <div class="question-texte" id="txt-question">—</div>
+      <div class="options" id="wrap-options"></div>
+      <div class="reward-pop" id="reward-pop" style="display:none">
+        <span class="reward-emoji" id="reward-emoji">🎊</span>
+        <div class="reward-titre" id="reward-titre">Tu gagnes des confettis !</div>
+        <div class="reward-lettre" id="reward-lettre">Lettre débloquée : C</div>
+      </div>
+      <div class="explication" id="bloc-explication" style="display:none">
+        <div class="explication-titre" id="txt-explication-titre"></div>
+        <div class="explication-texte" id="txt-explication-texte"></div>
+      </div>
+    </div>
+    <button class="btn btn-vert btn-sticky-cta" id="btn-suivant" style="display:none">—</button>
+  </div>
+</section>
+
+<!-- ============ ÉCRAN FINAL ============ -->
+<section id="screen-final" class="screen">
+
+  <!-- PHASE 1 : énigme puis reconstitution du mot -->
+  <div id="final-puzzle-phase">
+    <div class="card" style="text-align:center;margin-top:14px">
+      <h2 class="puzzle-titre">Dernière énigme, Super Marmaille ! 🧩</h2>
+      <p class="puzzle-sub" id="txt-enigme">Croki te pose une dernière énigme…</p>
+      <div class="puzzle-slots" id="puzzle-slots"></div>
+      <div class="puzzle-chips" id="puzzle-chips"></div>
+      <p class="puzzle-hint" id="puzzle-hint"></p>
+    </div>
+  </div>
+
+  <!-- PHASE 1bis : aller voir l'animateur -->
+  <div id="final-animateur-phase" style="display:none">
+    <div class="hero-croki"><img src="assets/img/croki-victoire-peace.webp" class="croki-img bounce" alt="Croki"></div>
+    <div class="card" style="text-align:center">
+      <h2 class="puzzle-titre">🎉 Bravo, tu as trouvé le mot secret !</h2>
+      <p class="mot-secret-affiche" id="txt-mot-secret-trouve">PARADIS</p>
+      <p class="gps-intro-txt" id="txt-va-voir-animateur">Va vite le dire à l'animateur du jour, il a une surprise pour toi !</p>
+    </div>
+    <button class="btn btn-orange btn-sticky-cta" id="btn-jai-vu-animateur">🎁 J'ai été voir l'animateur !</button>
+  </div>
+
+  <!-- PHASE 2 : célébration -->
+  <div id="final-celebration-phase" style="display:none">
+    <div class="hero-croki scene-complete" id="hero-final">
+      <div class="video-round">
+        <video id="video-outro" playsinline poster="assets/img/croki-victoire-medaille.webp">
+          <source src="assets/video/outro.mp4" type="video/mp4">
+        </video>
+        <button class="btn-son-video" id="btn-replay-outro" title="Revoir la vidéo" style="display:none">🔁</button>
+      </div>
+    </div>
+    <div class="card" style="text-align:center;margin-top:10px">
+      <h2 id="txt-final-titre"></h2>
+      <p id="txt-final-score"></p>
+      <div class="ings-collectes" id="wrap-ings-fin"></div>
+      <div class="avis-bloc">
+        <p class="avis-txt">Cette visite guidée interactive vous a plu ? Racontez votre expérience dans un avis Google — vos retours aident vraiment CrocParc à s'améliorer ! 🙏</p>
+        <a class="btn btn-jaune" id="btn-avis-google" href="https://maps.app.goo.gl/9z3HJ1a9ryugV8Za6" target="_blank" rel="noopener">⭐ Laisser un avis Google</a>
+      </div>
+      <button class="btn btn-gris" id="btn-recommencer">🔄 Recommencer l'aventure</button>
+      <a href="#" id="lien-contact-cache" class="lien-contact-cache">✨</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ÉCRAN CODE D'ACCÈS RÉGLAGES ============ -->
+<section id="screen-pin" class="screen">
+  <div class="hero-croki"><img src="assets/img/croki-hesite.webp" class="croki-img" alt="Croki"></div>
+  <div class="card" style="text-align:center">
+    <h2 class="pin-titre" id="pin-titre">🔒 Code secret</h2>
+    <p class="pin-sous-titre" id="pin-soustitre">Entre le code à 4 chiffres pour accéder aux réglages.</p>
+    <div class="pin-dots" id="pin-dots">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <p class="pin-erreur" id="pin-erreur"></p>
+    <div class="pin-pave" id="pin-pave"></div>
+    <button class="btn btn-gris btn-sm" id="btn-pin-annuler">← Retour</button>
+    <p class="pin-oublie" id="pin-oublie">Code oublié ?</p>
+  </div>
+</section>
+
+<!-- ============ ÉCRAN RÉGLAGES (ADMIN) ============ -->
+<section id="screen-admin" class="screen">
+  <header class="header">
+    <div><div class="header-titre">⚙️ Réglages</div><div class="header-sub">Configurer le parcours sur place</div></div>
+    <button class="btn-icon" id="btn-fermer-admin">✕</button>
+  </header>
+
+  <div class="card admin-intro">
+    <p>Pour chaque étape : place-toi devant le panneau, appuie sur <strong>📍 Utiliser ma position ici</strong>, puis écris ta question et enregistre ta voix. Tout est sauvegardé directement dans ce téléphone.</p>
+    <p style="margin-top:8px">💡 Les lettres du mot secret sont désormais distribuées au hasard entre les étapes à chaque partie — les enfants les remettent dans l'ordre à la fin dans un petit jeu. Tu peux renommer les accessoires librement.</p>
+    <button class="btn btn-gris btn-sm" id="btn-changer-pin" style="margin-top:10px">🔒 Changer le code d'accès</button>
+  </div>
+
+  <div class="card">
+    <div class="admin-stage-title">📊 Bilan des parties jouées</div>
+    <p style="font-size:13px;color:var(--texte-clair);margin-bottom:10px">Ces statistiques viennent de <strong>ce téléphone uniquement</strong>. Pour recevoir en un coup d'œil les données de <strong>tous</strong> les téléphones (combien terminent, quelles réponses sont données, jour par jour), une adresse d'envoi commune est gravée dans l'application — voir le guide fourni.</p>
+    <div id="bilan-resume"></div>
+    <div id="bilan-questions"></div>
+    <button class="btn btn-gris btn-sm" id="btn-reset-stats" type="button">🗑️ Effacer les statistiques de ce téléphone</button>
+    <hr class="admin-sep">
+    <label>Adresse d'envoi commune (Google Sheet)</label>
+    <input type="text" id="inp-webhook" placeholder="https://script.google.com/macros/s/.../exec">
+    <small id="webhook-status">Normalement déjà remplie et identique pour tout le monde. La changer ici ne l'appliquerait qu'à ce téléphone.</small>
+    <button class="btn btn-gris btn-sm" id="btn-save-webhook" type="button" style="margin-top:8px">Enregistrer (ce téléphone seulement)</button>
+  </div>
+
+  <div class="card">
+    <div class="admin-stage-title">🎙️ Banque de voix — tout ce qui se dit dans l'appli</div>
+    <p style="font-size:13px;color:var(--texte-clair);margin-bottom:10px">Enregistre ta voix pour chaque texte lu dans l'application. ⚠️ Tant qu'un texte n'est pas enregistré, il reste silencieux — aucune voix robot n'est jamais utilisée.</p>
+    <div id="wrap-voice-bank"></div>
+  </div>
+
+  <div id="wrap-admin-stages"></div>
+
+  <div class="card">
+    <button class="btn btn-gris" id="btn-export-config">⬇️ Exporter la config (JSON)</button>
+    <label class="btn btn-gris" style="text-align:center;display:block;cursor:pointer">
+      ⬆️ Importer une config (JSON)
+      <input type="file" id="inp-import-config" accept="application/json" style="display:none">
+    </label>
+    <button class="btn btn-gris" id="btn-reset-tout">🗑️ Réinitialiser tous les réglages</button>
+  </div>
+</section>
+
+<!-- Transition entre étapes -->
+<div class="transition-overlay" id="transition-overlay">
+  <img src="assets/img/croki-safari.webp" alt="En route" id="img-transition">
+  <div class="transition-txt" id="txt-transition">En route vers la prochaine aventure !</div>
+</div>
+
+<!-- Carte en plein écran -->
+<div class="map-fullscreen-overlay" id="map-fullscreen-overlay">
+  <button class="btn btn-vert" id="btn-fermer-map-plein-ecran">⬅ Retour aux questions</button>
+  <div class="map-fullscreen-imgwrap">
+    <img src="" id="img-plan-parc-plein-ecran" alt="Plan du parc en grand">
+  </div>
+</div>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<script src="js/config.js"></script>
+<script src="js/db.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
