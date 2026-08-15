@@ -1,0 +1,10 @@
+# Donnees du pont : file SQLite, archives, previews, journaux.
+bridge/data/
+# Secrets et reglages locaux.
+.env
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
