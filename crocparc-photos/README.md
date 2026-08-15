@@ -252,6 +252,13 @@ est rejouable et s'arrete a la premiere erreur.
 dans l'ordre : Cloudflare, Stripe, le pont et son tunnel, Make, les cartes, et
 la repetition generale a faire avant d'ouvrir au public.
 
+**[docs/REPRISE-EN-LOCAL.md](docs/REPRISE-EN-LOCAL.md)** sert a reprendre le
+projet sur une machine disposant des acces Cloudflare et Stripe : etat des
+lieux, identifiants deja crees, et ce qui n'a jamais pu etre verifie a distance.
+
+**[CLAUDE.md](CLAUDE.md)** liste les invariants du projet — les regles ecrites
+en reponse a un defaut reel, qu'il ne faut pas « simplifier ».
+
 ### Developpement local
 
 `wrangler` fait tourner les Functions dans le vrai moteur Cloudflare, avec une
