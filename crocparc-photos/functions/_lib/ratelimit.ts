@@ -36,13 +36,16 @@ export const SUCCESSFUL_LOOKUPS: RateLimitRule = {
   windowSeconds: 600,
 }
 
-/** Adresse de l'appelant telle que Cloudflare la voit. */
-export function clientIp(request: Request): string {
-  return (
-    request.headers.get("CF-Connecting-IP") ??
-    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ??
-    "inconnue"
-  )
+/**
+ * Adresse de l'appelant telle que Cloudflare la voit.
+ *
+ * Uniquement `CF-Connecting-IP` : `X-Forwarded-For` est fourni par le client et
+ * permettrait de changer de seau a chaque requete. En son absence -- ce qui ne
+ * doit pas arriver derriere Cloudflare -- on retourne null, et l'appelant
+ * refuse de servir plutot que de mettre tout le monde dans le meme seau.
+ */
+export function clientIp(request: Request): string | null {
+  return request.headers.get("CF-Connecting-IP")
 }
 
 async function bucketKey(secret: string, ip: string, rule: RateLimitRule): Promise<string> {

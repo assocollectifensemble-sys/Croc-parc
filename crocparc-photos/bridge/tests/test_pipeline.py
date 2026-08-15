@@ -523,3 +523,51 @@ def test_photo_declaree_n_est_plus_rerangee(config, queue, processor):
 
     assert queue.get(photo).session_id == orpheline  # rien n'a bouge
     assert any(e["kind"] == "reassign_conflict" for e in queue.events())
+
+
+def test_carte_remise_en_circulation_trop_tot_est_mise_en_quarantaine(config, queue, processor):
+    """Le seul chemin par lequel une famille pourrait voir les photos d'une autre.
+
+    Le visiteur ne possede que son code : deux galeries actives sous le meme
+    code seraient indemelables. Le pont refuse donc d'en ouvrir une seconde, et
+    range les photos en orphelines plutot que de risquer la confusion.
+    """
+    # Premiere visite, le 15 octobre.
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    premiere = make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    run(processor, config, queue)
+    assert queue.sessions_for_day(JOUR)[0].photo_count == 1
+
+    # La meme carte ressort le 20, avant expiration de la galerie du 15.
+    make_card(config.watch_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 20, 9, 0))
+    seconde = make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 10, 20, 9, 5), seed=4)
+    run(processor, config, queue, now=T0 + 200)
+
+    sessions_du_20 = {s.code: s for s in queue.sessions_for_day("2026-10-20")}
+    assert "K7M2QP" not in sessions_du_20  # aucune seconde galerie n'est ouverte
+    assert sessions_du_20["ORPHAN"].photo_count == 1
+
+    # La galerie de la premiere famille n'a pas bouge d'un cheveu.
+    assert queue.sessions_for_day(JOUR)[0].photo_count == 1
+    assert queue.get(premiere).session_id != queue.get(seconde).session_id
+
+    alertes = [e for e in queue.events() if e["kind"] == "card_quarantine"]
+    assert len(alertes) == 1
+    assert "trop tot" in alertes[0]["message"]
+
+
+def test_carte_reutilisee_apres_expiration_ouvre_bien_une_session(config, queue, processor):
+    """Passe la duree de vie, la carte reprend du service normalement."""
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    run(processor, config, queue)
+
+    # 40 jours plus tard : la galerie du 15 octobre a expire.
+    make_card(config.watch_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 11, 24, 9, 0))
+    make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 11, 24, 9, 5), seed=4)
+    run(processor, config, queue, now=T0 + 400)
+
+    sessions = {s.code: s for s in queue.sessions_for_day("2026-11-24")}
+    assert sessions["K7M2QP"].photo_count == 1
+    assert "ORPHAN" not in sessions
+    assert not [e for e in queue.events() if e["kind"] == "card_quarantine"]

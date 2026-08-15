@@ -2,6 +2,12 @@
  * GET  /api/download/:token         - ce que la commande donne droit a telecharger
  * GET  /api/download/:token/:photo  - le fichier lui-meme
  *
+ * Le nom du fichier est `[[token]]` et non `[token]` : un crochet simple ne
+ * capture qu'un seul segment d'URL, et la route a deux segments tombait sur les
+ * fichiers statiques -- le visiteur telechargeait la page d'accueil renommee en
+ * .JPG. Le double crochet capture le reste du chemin, et `params.token` devient
+ * un tableau.
+ *
  * Le jeton EST le droit d'acces : il est tire au hasard, lie a une commande
  * payee, et expire avec la session. On ne renvoie jamais d'URL signee R2 :
  * servir le fichier a travers la Function evite de fabriquer des signatures
@@ -13,6 +19,7 @@
  */
 
 import { fetchOriginals } from "../../_lib/originals"
+import { FAILED_LOOKUPS, clientIp, hit } from "../../_lib/ratelimit"
 import { type Env, json } from "../../_lib/types"
 
 const TOKEN_PATTERN = /^[a-f0-9]{32}$/
@@ -43,12 +50,19 @@ async function chargerCommande(env: Env, jeton: string): Promise<Commande | null
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
+  const ip = clientIp(request)
+  if (!ip) return json(503, { error: "service indisponible" })
+
   const morceaux = Array.isArray(params.token) ? params.token : [String(params.token ?? "")]
   const jeton = morceaux[0] ?? ""
   const photoDemandee = morceaux[1]
 
   const commande = await chargerCommande(env, jeton)
-  if (!commande) return refuse()
+  if (!commande) {
+    // Un jeton est un droit d'acces : on ne laisse pas essayer indefiniment.
+    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
+    return limite.allowed ? refuse() : json(429, { error: "trop de tentatives" })
+  }
 
   // Le lien meurt avec la galerie : 30 jours apres la visite.
   if (new Date(commande.expires_at) <= new Date()) return refuse()
@@ -106,7 +120,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   const entetes = new Headers()
   objet.writeHttpMetadata(entetes)
   entetes.set("Content-Type", "image/jpeg")
-  entetes.set("Content-Disposition", `attachment; filename="${photo.filename}"`)
+  // Le nom vient du boitier, via le pont : un guillemet ou un caractere non
+  // latin-1 casserait l'en-tete, voire ferait lever Headers.set.
+  const nomSur = photo.filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "photo.jpg"
+  entetes.set("Content-Disposition", `attachment; filename="${nomSur}"`)
   entetes.set("Cache-Control", "private, no-store")
   entetes.set("etag", objet.httpEtag)
 

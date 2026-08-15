@@ -79,10 +79,12 @@ export async function purger(env: Env, maintenant = new Date()): Promise<Bilan> 
         }
       }
 
-      // Les commandes gardent leur trace comptable, mais perdent tout pouvoir :
-      // plus de jeton, donc plus de telechargement possible.
+      // Les commandes gardent leur trace comptable (montant, date, produit),
+      // mais perdent tout ce qui touche a la famille : plus de jeton, donc plus
+      // de telechargement, et plus d'adresse electronique. Sans la condition
+      // sur le jeton, les paniers abandonnes sont nettoyes eux aussi.
       const commandes = await env.DB.prepare(
-        "UPDATE orders SET download_token = NULL, photo_ids = '[]' WHERE session_id = ? AND download_token IS NOT NULL",
+        "UPDATE orders SET download_token = NULL, photo_ids = '[]', email = NULL WHERE session_id = ?",
       )
         .bind(session.id)
         .run()

@@ -13,6 +13,7 @@ export const CONFIG = {
       (date ? `?date=${encodeURIComponent(date)}` : ""),
     checkout: "/api/checkout",
     download: (token) => `/api/download/${encodeURIComponent(token)}`,
+    order: (commande) => `/api/order/${encodeURIComponent(commande)}`,
   },
 
   /** Duree de vie d'une galerie, affichee au visiteur. */

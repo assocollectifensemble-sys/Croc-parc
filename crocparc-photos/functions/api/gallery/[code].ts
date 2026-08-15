@@ -8,10 +8,11 @@
  *    ne doit permettre de distinguer « ce code n'existe pas » de « ce code
  *    existe mais n'est plus actif ».
  * 2. **Jamais la galerie d'une autre famille.** Les cartes sont physiques et
- *    reutilisables : deux visites du meme code peuvent cohabiter tant que la
- *    premiere n'a pas expire. Dans ce cas on ne devine pas, on demande la date
- *    de visite -- servir « la plus recente » reviendrait a montrer les enfants
- *    d'inconnus a la premiere famille.
+ *    repassent en circulation. Le pont refuse deja d'ouvrir une seconde session
+ *    sur un code dont la galerie vit encore, donc ce cas ne devrait pas exister
+ *    -- mais s'il se presentait malgre tout, on refuse plutot que de choisir.
+ *    Demander la date de visite ne protegerait rien : quiconque tient la carte
+ *    repondrait aussi bien pour la visite d'une autre famille.
  * 3. **Jamais de chemin d'original.** Uniquement previews et vignettes.
  * 4. **Limitation de debit** sur les echecs, pour rendre l'enumeration vaine.
  */
@@ -19,8 +20,6 @@
 import { FAILED_LOOKUPS, SUCCESSFUL_LOOKUPS, clientIp, hit } from "../../_lib/ratelimit"
 import { publicPricing } from "../../_lib/pricing"
 import { type Env, isGalleryCode, json } from "../../_lib/types"
-
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 interface SessionRow {
   id: string
@@ -49,8 +48,8 @@ function trop(retryAfter: number): Response {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env, params }) => {
   const ip = clientIp(request)
+  if (!ip) return json(503, { error: "service indisponible" })
   const code = String(params.code ?? "").trim().toUpperCase()
-  const dateDemandee = new URL(request.url).searchParams.get("date")
 
   const echec = async () => {
     const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
@@ -60,7 +59,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   // Un code mal forme ne merite pas une requete en base, mais il compte comme
   // un echec : sinon il suffirait d'envoyer du bruit pour sonder gratuitement.
   if (!isGalleryCode(code)) return echec()
-  if (dateDemandee !== null && !DATE_PATTERN.test(dateDemandee)) return echec()
 
   const succes = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, SUCCESSFUL_LOOKUPS)
   if (!succes.allowed) return trop(succes.retryAfter)
@@ -77,22 +75,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
 
   if (sessions.length === 0) return echec()
 
-  let session: SessionRow | undefined
-  if (sessions.length === 1) {
-    session = sessions[0]
-  } else if (dateDemandee) {
-    session = sessions.find((candidate) => candidate.session_date === dateDemandee)
-    if (!session) return echec()
-  } else {
-    // Cette carte a servi plusieurs fois pendant sa duree de vie. On ne choisit
-    // pas a la place du visiteur : il indique le jour de sa visite.
-    return json(409, {
-      error: "plusieurs visites",
-      message:
-        "Cette carte a servi pour plusieurs visites. Indiquez le jour de la votre.",
-      dates: sessions.map((candidate) => candidate.session_date),
-    })
+  if (sessions.length > 1) {
+    // Ne devrait jamais arriver : le pont met en quarantaine toute carte
+    // remise en circulation avant expiration. Si la base en contient tout de
+    // meme deux, on ne sert rien -- une galerie muette vaut mieux qu'une
+    // galerie qui montre les enfants de quelqu'un d'autre.
+    console.error(`plusieurs sessions actives pour le code ${code}, aucune servie`)
+    return echec()
   }
+  const session = sessions[0]
 
   const { results } = await env.DB.prepare(
     `SELECT id, shot_at, preview_key, thumb_key, width, height

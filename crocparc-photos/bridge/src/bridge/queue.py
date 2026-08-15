@@ -432,16 +432,21 @@ class Queue:
             self.conn.commit()
         return count
 
-    def card_session_at(self, shot_at: str) -> tuple[str, str] | None:
-        """Session ouverte par la derniere carte photographiee avant `shot_at`.
+    def card_session_at(self, shot_at: str) -> tuple[str | None, str] | None:
+        """Derniere carte photographiee avant `shot_at`, et sa session.
 
         Restreint au meme jour : une carte de la veille n'attrape pas les photos
         du lendemain matin.
+
+        Une carte mise en quarantaine (remise en circulation trop tot) reste une
+        frontiere : elle est retournee avec une session vide, pour que les
+        photos qui la suivent partent en session orpheline plutot que de
+        rejoindre le groupe precedent.
         """
         row = self.conn.execute(
             """
             SELECT session_id, shot_at FROM files
-             WHERE is_card = 1 AND session_id IS NOT NULL AND shot_at IS NOT NULL
+             WHERE is_card = 1 AND shot_at IS NOT NULL
                AND substr(shot_at, 1, 10) = substr(?, 1, 10)
                AND shot_at <= ?
              ORDER BY shot_at DESC LIMIT 1
@@ -449,6 +454,25 @@ class Queue:
             (shot_at, shot_at),
         ).fetchone()
         return (row["session_id"], row["shot_at"]) if row else None
+
+    def session_encore_vivante(self, code: str, session_date: str) -> SessionRow | None:
+        """Session d'un autre jour, pour ce code, dont la galerie n'a pas expire.
+
+        Une carte remise en circulation trop tot est le seul chemin connu par
+        lequel une famille pourrait voir les photos d'une autre : le code est le
+        seul identifiant que le visiteur possede, donc deux sessions vivantes
+        sous le meme code sont indemelables.
+        """
+        row = self.conn.execute(
+            """
+            SELECT * FROM sessions
+             WHERE code = ? AND session_date != ? AND status = 'active'
+               AND expires_at >= ?
+             ORDER BY session_date DESC LIMIT 1
+            """,
+            (code, session_date, session_date),
+        ).fetchone()
+        return SessionRow.from_sqlite(row) if row else None
 
     def other_card_shots(self, code: str, day: str, exclude_path: Path) -> list[FileRow]:
         """Autres photos de la meme carte le meme jour : la carte a resservi."""

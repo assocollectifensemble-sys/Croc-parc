@@ -209,18 +209,20 @@ describe("carte reutilisee pendant la duree de vie d'une session", () => {
     }
   }
 
-  it("ne sert aucune photo tant que la date n'est pas precisee", async () => {
+  it("ne sert rien du tout, et ne revele meme pas les dates", async () => {
+    // Le pont met normalement ces cartes en quarantaine, donc ce cas ne devrait
+    // pas exister. S'il existe malgre tout, demander la date au visiteur ne
+    // protegerait rien : quiconque tient la carte repondrait aussi bien pour la
+    // visite d'une autre famille. On refuse.
     deuxVisites()
     const reponse = await demander("K7M2QP")
-    expect(reponse.status).toBe(409)
-    const corps = (await reponse.json()) as any
-    expect(corps.dates).toEqual(["2026-09-01", "2026-08-15"])
-    expect(JSON.stringify(corps)).not.toContain("preview")
+    expect(reponse.status).toBe(404)
+    expect(await reponse.json()).toEqual({ error: "galerie introuvable" })
   })
 
-  it("sert la bonne visite quand la date est donnee", async () => {
+  it("une date fournie ne debloque rien", async () => {
     deuxVisites()
-    const request = new Request("https://photos.crocparc.re/api/gallery/K7M2QP?date=2026-08-15", {
+    const request = new Request("https://photos.crocparc.re/api/gallery/K7M2QP?date=2026-09-01", {
       headers: { "CF-Connecting-IP": "203.0.113.7" },
     })
     const reponse = (await onRequestGet({
@@ -228,25 +230,17 @@ describe("carte reutilisee pendant la duree de vie d'une session", () => {
       env,
       params: { code: "K7M2QP" },
     } as any)) as Response
-    expect(reponse.status).toBe(200)
-    const corps = (await reponse.json()) as any
-    expect(corps.session_date).toBe("2026-08-15")
-    expect(corps.photos).toHaveLength(2)
-    expect(JSON.stringify(corps)).not.toContain("sept")
-  })
-
-  it("une date qui ne correspond a rien reste indiscernable d'un code inconnu", async () => {
-    deuxVisites()
-    const request = new Request("https://photos.crocparc.re/api/gallery/K7M2QP?date=2026-07-01", {
-      headers: { "CF-Connecting-IP": "203.0.113.8" },
-    })
-    const reponse = (await onRequestGet({
-      request,
-      env,
-      params: { code: "K7M2QP" },
-    } as any)) as Response
     expect(reponse.status).toBe(404)
-    expect(await reponse.json()).toEqual({ error: "galerie introuvable" })
+    expect(await reponse.text()).not.toContain("preview")
+  })
+})
+
+describe("appelant sans adresse identifiable", () => {
+  it("refuse de servir plutot que de mettre tout le monde dans le meme seau", async () => {
+    creerSession({ code: "K7M2QP", photos: 1 })
+    const request = new Request("https://photos.crocparc.re/api/gallery/K7M2QP")
+    const reponse = (await onRequestGet({ request, env, params: { code: "K7M2QP" } } as any)) as Response
+    expect(reponse.status).toBe(503)
   })
 })
 

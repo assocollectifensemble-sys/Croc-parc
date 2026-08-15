@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { onRequestPost as checkout } from "../api/checkout"
 import { onRequestPost as webhook } from "../api/webhook/stripe"
-import { onRequestGet as download } from "../api/download/[token]"
+import { onRequestGet as download } from "../api/download/[[token]]"
 import { FakeD1 } from "./fake-d1"
 import { FakeR2 } from "./fake-r2"
 
@@ -51,8 +51,12 @@ beforeEach(() => {
         corps: String(options.body ?? ""),
         idempotence: options.headers?.["Idempotency-Key"] ?? null,
       })
+      // Le vrai Stripe renvoie la meme session pour une meme cle
+      // d'idempotence : on l'imite, sinon le double clic n'est pas teste.
+      const cle = options.headers?.["Idempotency-Key"] ?? String(appelsStripe.length)
+      const identifiant = `cs_test_${cle}`
       return new Response(
-        JSON.stringify({ id: "cs_test_123", url: "https://checkout.stripe.com/c/pay/cs_test_123" }),
+        JSON.stringify({ id: identifiant, url: `https://checkout.stripe.com/c/pay/${identifiant}` }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       )
     }
@@ -115,11 +119,11 @@ function creerVisite(code = "K7M2QP", nombre = 4, date = "2026-10-15") {
   return { sessionId, ids }
 }
 
-async function demanderPaiement(corps: unknown) {
+async function demanderPaiement(corps: unknown, ip = "203.0.113.7") {
   const request = new Request("https://photos.crocparc.re/api/checkout", {
     method: "POST",
     body: JSON.stringify(corps),
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip },
   })
   return (await checkout({ request, env } as any)) as Response
 }
@@ -182,14 +186,27 @@ describe("checkout", () => {
     await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [ids[0]] })
     const commande = db.db.prepare("SELECT * FROM orders").get() as any
     expect(commande.status).toBe("pending")
-    expect(commande.stripe_session_id).toBe("cs_test_123")
+    expect(commande.stripe_session_id).toMatch(/^cs_test_/)
     expect(commande.download_token).toBeNull()
   })
 
-  it("protege du double clic par une cle d'idempotence", async () => {
+  it("un double clic ne cree qu'une seule commande", async () => {
+    const { ids } = creerVisite()
+    const panier = { code: "K7M2QP", product: "single", photo_ids: [ids[0]] }
+    const premier = (await (await demanderPaiement(panier)).json()) as any
+    const second = (await (await demanderPaiement(panier)).json()) as any
+
+    expect(appelsStripe[0].idempotence).toBeTruthy()
+    expect(appelsStripe[1].idempotence).toBe(appelsStripe[0].idempotence)
+    expect(second.order_id).toBe(premier.order_id)
+    expect((db.db.prepare("SELECT COUNT(*) n FROM orders").get() as any).n).toBe(1)
+  })
+
+  it("deux paniers differents restent deux commandes", async () => {
     const { ids } = creerVisite()
     await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [ids[0]] })
-    expect(appelsStripe[0].idempotence).toBeTruthy()
+    await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [ids[1]] })
+    expect((db.db.prepare("SELECT COUNT(*) n FROM orders").get() as any).n).toBe(2)
   })
 
   it("refuse un produit inconnu, un code inconnu, une selection vide", async () => {
@@ -251,7 +268,9 @@ async function envoyerWebhook(evenement: unknown, options: { secret?: string; de
   return reponse
 }
 
-function evenementPaiement(commande: string) {
+function evenementPaiement(commande: string, surcharge: Record<string, unknown> = {}) {
+  const montant = (db.db.prepare("SELECT amount_cents FROM orders WHERE id = ?").get(commande) as any)
+    ?.amount_cents
   return {
     id: "evt_1",
     type: "checkout.session.completed",
@@ -259,7 +278,11 @@ function evenementPaiement(commande: string) {
       object: {
         id: "cs_test_123",
         client_reference_id: commande,
+        payment_status: "paid",
+        amount_total: montant,
+        currency: "eur",
         customer_details: { email: "famille@exemple.re" },
+        ...surcharge,
       },
     },
   }
@@ -331,7 +354,9 @@ describe("webhook Stripe", () => {
 /* --- telechargement ------------------------------------------------------- */
 describe("telechargement", () => {
   async function demanderTelechargement(morceaux: string[]) {
-    const request = new Request(`https://photos.crocparc.re/api/download/${morceaux.join("/")}`)
+    const request = new Request(`https://photos.crocparc.re/api/download/${morceaux.join("/")}`, {
+      headers: { "CF-Connecting-IP": "203.0.113.7" },
+    })
     return (await download({ request, env, params: { token: morceaux } } as any)) as Response
   }
 
@@ -382,5 +407,148 @@ describe("telechargement", () => {
     const reponse = await demanderTelechargement([commande.download_token, liste.photos[0].id])
     expect(reponse.status).toBe(200)
     expect(r2.objets.size).toBeGreaterThan(0)
+  })
+})
+
+/* --- ce que le webhook doit refuser --------------------------------------- */
+describe("webhook : livraison seulement si l'argent est encaisse", () => {
+  async function commandeEnAttente() {
+    const { ids } = creerVisite()
+    await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: ids.slice(0, 2) })
+    return (db.db.prepare("SELECT id FROM orders").get() as any).id
+  }
+
+  it("ne livre pas un paiement differe encore impaye", async () => {
+    // Prelevement, virement : Stripe emet `completed` avec payment_status
+    // "unpaid", puis un second evenement quand l'argent arrive.
+    const commande = await commandeEnAttente()
+    const reponse = await envoyerWebhook(
+      evenementPaiement(commande, { payment_status: "unpaid" }),
+    )
+    expect(reponse.status).toBe(200)
+    const ligne = db.db.prepare("SELECT * FROM orders").get() as any
+    expect(ligne.status).toBe("pending")
+    expect(ligne.download_token).toBeNull()
+  })
+
+  it("livre au second evenement, quand le paiement differe aboutit", async () => {
+    const commande = await commandeEnAttente()
+    await envoyerWebhook(evenementPaiement(commande, { payment_status: "unpaid" }))
+    const evenement = evenementPaiement(commande)
+    evenement.type = "checkout.session.async_payment_succeeded"
+    await envoyerWebhook(evenement)
+    expect((db.db.prepare("SELECT status FROM orders").get() as any).status).toBe("paid")
+  })
+
+  it("refuse un montant qui ne correspond pas a la commande", async () => {
+    const commande = await commandeEnAttente()
+    await envoyerWebhook(evenementPaiement(commande, { amount_total: 1 }))
+    expect((db.db.prepare("SELECT status FROM orders").get() as any).status).toBe("pending")
+  })
+
+  it("refuse une autre devise", async () => {
+    const commande = await commandeEnAttente()
+    await envoyerWebhook(evenementPaiement(commande, { currency: "usd" }))
+    expect((db.db.prepare("SELECT status FROM orders").get() as any).status).toBe("pending")
+  })
+})
+
+/* --- enumeration par /api/checkout ---------------------------------------- */
+describe("checkout : pas d'oracle d'enumeration", () => {
+  it("compte les echecs et finit par refuser", async () => {
+    creerVisite("K7M2QP", 2)
+    const ip = "192.0.2.77"
+    const statuts: number[] = []
+    for (let essai = 0; essai < 12; essai++) {
+      const reponse = await demanderPaiement(
+        { code: "W8XZ3N", product: "pack", photo_ids: [] },
+        ip,
+      )
+      statuts.push(reponse.status)
+    }
+    expect(statuts.slice(0, 10)).toEqual(Array(10).fill(404))
+    expect(statuts.slice(10)).toEqual([429, 429])
+  })
+
+  it("une selection vide sur un vrai code compte aussi comme un echec", async () => {
+    creerVisite("K7M2QP", 2)
+    const ip = "192.0.2.78"
+    for (let essai = 0; essai < 10; essai++) {
+      await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [] }, ip)
+    }
+    const bloque = await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [] }, ip)
+    expect(bloque.status).toBe(429)
+  })
+
+  it("un achat legitime n'est jamais bloque", async () => {
+    const { ids } = creerVisite("K7M2QP", 3)
+    const ip = "192.0.2.79"
+    for (let achat = 0; achat < 15; achat++) {
+      const reponse = await demanderPaiement(
+        { code: "K7M2QP", product: "single", photo_ids: [ids[achat % 3]] },
+        ip,
+      )
+      expect(reponse.status).toBe(200)
+    }
+  })
+})
+
+/* --- tarif ---------------------------------------------------------------- */
+describe("tarif du forfait", () => {
+  it("ne facture jamais le forfait plus cher que les photos a l'unite", async () => {
+    creerVisite("K7M2QP", 2) // deux photos : 10 euros a l'unite
+    const reponse = await demanderPaiement({ code: "K7M2QP", product: "pack", photo_ids: [] })
+    expect(((await reponse.json()) as any).amount_cents).toBe(1000)
+    expect(montantEnvoyeAStripe()).toBe(1000)
+  })
+
+  it("applique le forfait des que la visite est fournie", async () => {
+    creerVisite("K7M2QP", 9)
+    const reponse = await demanderPaiement({ code: "K7M2QP", product: "pack", photo_ids: [] })
+    expect(((await reponse.json()) as any).amount_cents).toBe(2000)
+  })
+})
+
+/* --- le client recupere son lien ------------------------------------------ */
+describe("recuperation du lien apres paiement", () => {
+  async function demanderCommande(id: string, ip = "203.0.113.7") {
+    const { onRequestGet } = await import("../api/order/[commande]")
+    const request = new Request(`https://photos.crocparc.re/api/order/${id}`, {
+      headers: { "CF-Connecting-IP": ip },
+    })
+    return (await onRequestGet({ request, env, params: { commande: id } } as any)) as Response
+  }
+
+  it("rend le jeton une fois la commande payee", async () => {
+    const commande = await commandePayee()
+    const reponse = await demanderCommande(commande.id)
+    expect(reponse.status).toBe(200)
+    expect(((await reponse.json()) as any).token).toBe(commande.download_token)
+  })
+
+  it("fait patienter tant que Stripe n'a pas confirme", async () => {
+    const { ids } = creerVisite()
+    await demanderPaiement({ code: "K7M2QP", product: "single", photo_ids: [ids[0]] })
+    const id = (db.db.prepare("SELECT id FROM orders").get() as any).id
+
+    const reponse = await demanderCommande(id)
+    expect(reponse.status).toBe(202)
+    const corps = (await reponse.json()) as any
+    expect(corps.status).toBe("pending")
+    expect(corps.token).toBeUndefined()
+  })
+
+  it("ne se laisse pas sonder", async () => {
+    const inconnu = "11111111-2222-3333-4444-555555555555"
+    const ip = "192.0.2.90"
+    for (let essai = 0; essai < 10; essai++) {
+      expect((await demanderCommande(inconnu, ip)).status).toBe(404)
+    }
+    expect((await demanderCommande(inconnu, ip)).status).toBe(429)
+  })
+
+  it("refuse un identifiant qui n'est pas un uuid", async () => {
+    expect((await demanderCommande("../../etc/passwd")).status).toBe(404)
+    expect((await demanderCommande("1")).status).toBe(404)
   })
 })

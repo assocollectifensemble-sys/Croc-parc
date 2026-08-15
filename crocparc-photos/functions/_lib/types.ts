@@ -78,6 +78,13 @@ export function isIngestCode(code: unknown): code is string {
 export function json(status: number, payload: unknown): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      // Une reponse de galerie porte les URLs des photos d'une famille : aucun
+      // intermediaire ne doit la garder. `web/_headers` ne couvre pas de
+      // maniere fiable les reponses des Functions, on le pose donc ici.
+      "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
+    },
   })
 }

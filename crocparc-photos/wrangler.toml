@@ -32,6 +32,10 @@ PREVIEWS_BASE_URL = "https://previews.crocparc.re"
 PUBLIC_BASE_URL = "https://photos.crocparc.re"
 # URL de POST /fetch-original sur le pont, exposee par le tunnel Cloudflare.
 BRIDGE_FETCH_URL = "https://pont.crocparc.re/fetch-original"
+# Webhook Make, appele apres paiement (mail au client, ligne dans Google
+# Sheets, alerte). Laisser vide desactive proprement l'integration : la
+# commande reste valide et le client telecharge depuis la page de retour.
+MAKE_WEBHOOK_URL = ""
 
 # Secrets, jamais dans ce fichier :
 #   npx wrangler pages secret put BRIDGE_SHARED_SECRET   (identique au pont)

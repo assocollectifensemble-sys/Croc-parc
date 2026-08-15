@@ -212,6 +212,35 @@ class Processor:
         """Ouvre une session et met la photo de la carte de cote, jamais publiee."""
         assert row.code and row.shot_at
         session_date = row.shot_at[:10]
+
+        # Une carte dont la galerie precedente vit encore ne peut pas ouvrir de
+        # session : le visiteur ne dispose que du code, et deux galeries sous le
+        # meme code seraient indemelables. On refuse plutot que de risquer de
+        # montrer les enfants d'une famille a une autre. Les photos qui suivent
+        # partiront en session orpheline, visibles en admin seulement.
+        vivante = self.queue.session_encore_vivante(row.code, session_date)
+        if vivante is not None:
+            message = (
+                f"carte {row.code} remise en circulation trop tot : sa galerie du "
+                f"{vivante.session_date} est valable jusqu'au {vivante.expires_at}. "
+                "Les photos de ce groupe partent en session orpheline."
+            )
+            log.error("carte en quarantaine", extra={
+                "code": row.code,
+                "session_precedente": vivante.session_date,
+                "expire_le": vivante.expires_at,
+            })
+            self.queue.record_event("card_quarantine", message, row.path)
+            destination = (
+                self.config.originals_dir / "cards" / session_date
+                / f"{row.code}-quarantaine-{row.filename}"
+            )
+            sha1 = copy_verified(row.path, destination)
+            # is_card reste a 1 : la carte demeure une frontiere de session,
+            # mais sans session_id, donc ce qui suit part en orphelines.
+            self.queue.update(row.path, state=FileState.DONE, sha1=sha1, session_id=None)
+            return True
+
         session = self.queue.get_or_create_session(
             code=row.code,
             session_date=session_date,
@@ -382,7 +411,7 @@ class Processor:
     def _session_for(self, row: FileRow) -> SessionRow:
         assert row.shot_at
         found = self.queue.card_session_at(row.shot_at)
-        if found:
+        if found and found[0]:
             session = self.queue.session(found[0])
             if session is not None:
                 return session

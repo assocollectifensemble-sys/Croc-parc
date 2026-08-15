@@ -3,6 +3,10 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Permissions-Policy: geolocation=(), camera=(), microphone=()
+  # Le front n'a besoin de rien d'exterieur, sauf des images de previews.
+  # La console d'admin garde son jeton en memoire d'onglet : une injection
+  # de script serait couteuse.
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self'; script-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
 
 # Une galerie ne doit jamais etre indexee ni mise en cache par un
 # intermediaire : elle contient des photos d'enfants.

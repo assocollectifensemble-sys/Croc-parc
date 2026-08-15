@@ -358,12 +358,14 @@ il evite seulement d'exposer la machine.
 
 Quelques garde-fous qui meritent d'etre connus :
 
-- **Une carte ayant servi a deux visites** ne montre jamais la mauvaise. Les
-  cartes sont physiques et repassent en circulation : tant que la premiere
-  galerie n'a pas expire, deux visites du meme code cohabitent. Dans ce cas le
-  site demande la date de visite au lieu de choisir -- servir « la plus
-  recente » reviendrait a montrer les enfants d'inconnus a la premiere famille.
-  Consequence pratique : **imprimez de quoi tenir plus de 30 jours de rotation.**
+- **Une carte remise en circulation trop tot est mise en quarantaine.** Les
+  cartes sont physiques et repassent en circulation ; le visiteur ne dispose
+  que de son code, donc deux galeries vivantes sous le meme code seraient
+  indemelables. Le pont **refuse d'ouvrir la seconde session** : les photos de
+  ce groupe partent en session orpheline, visibles en admin seulement, et une
+  alerte `card_quarantine` est levee. Une vente perdue vaut mieux que les
+  enfants d'une famille montres a une autre. Consequence pratique :
+  **imprimez de quoi tenir plus de 30 jours de rotation.**
 - **Les cles R2 des previews sont derivees d'un sel local**, pas du code ni du
   nom de fichier du boitier. Le bucket etant public, une cle du type
   `2026-10-15/K7M2QP/DSC01234_p.jpg` serait devinable -- et pour la session

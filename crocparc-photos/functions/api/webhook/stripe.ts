@@ -32,18 +32,26 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   }
 
   const evenement = JSON.parse(brut)
-  if (evenement.type !== "checkout.session.completed") {
+  // `completed` arrive aussi pour les moyens de paiement a notification
+  // differee (prelevement, virement), avec payment_status = "unpaid" : le
+  // succes reel arrive alors dans un second evenement.
+  const TYPES = ["checkout.session.completed", "checkout.session.async_payment_succeeded"]
+  if (!TYPES.includes(evenement.type)) {
     // Tout le reste ne nous concerne pas, mais doit etre acquitte : sinon
     // Stripe rejoue indefiniment.
     return json(200, { ignore: evenement.type })
   }
 
   const paiement = evenement.data?.object ?? {}
+  if (paiement.payment_status !== "paid") {
+    // Commande enregistree, argent pas encore encaisse : on ne livre rien.
+    return json(200, { ignore: `payment_status=${paiement.payment_status}` })
+  }
   const commande = paiement.client_reference_id ?? paiement.metadata?.commande
   if (!commande) return json(200, { ignore: "sans reference de commande" })
 
   const ligne = await env.DB.prepare(
-    "SELECT id, session_id, photo_ids, status, download_token FROM orders WHERE id = ?",
+    "SELECT id, session_id, photo_ids, status, download_token, amount_cents FROM orders WHERE id = ?",
   )
     .bind(commande)
     .first<{
@@ -52,6 +60,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
       photo_ids: string
       status: string
       download_token: string | null
+      amount_cents: number
     }>()
 
   if (!ligne) {
@@ -62,6 +71,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   // Deja traitee : on renvoie le meme jeton, sans rien recreer.
   if (ligne.status === "paid" && ligne.download_token) {
     return json(200, { deja_traite: true, order_id: ligne.id })
+  }
+
+  // Le montant encaisse doit etre celui qu'on a calcule. Un ecart signale une
+  // session de paiement modifiee ailleurs qu'ici : on ne livre pas.
+  const encaisse = Number(paiement.amount_total)
+  const devise = String(paiement.currency ?? "").toLowerCase()
+  if (encaisse !== ligne.amount_cents || devise !== "eur") {
+    console.error(
+      `montant inattendu pour ${commande} : ${encaisse} ${devise} au lieu de ${ligne.amount_cents} eur`,
+    )
+    return json(200, { ignore: "montant inattendu" })
   }
 
   const jeton = ligne.download_token ?? crypto.randomUUID().replace(/-/g, "")

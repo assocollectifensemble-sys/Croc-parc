@@ -7,6 +7,9 @@ compatibility_date = "2024-09-23"
 [triggers]
 crons = ["0 3 * * *"]
 
+# ATTENTION : database_id doit etre EXACTEMENT celui du wrangler.toml racine.
+# S'il differe, le cron tourne chaque nuit contre une base vide, journalise une
+# purge reussie avec des zeros, et rien n'est jamais efface.
 [[d1_databases]]
 binding = "DB"
 database_name = "crocparc-photos"

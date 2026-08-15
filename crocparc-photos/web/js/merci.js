@@ -18,8 +18,8 @@ const elements = {
 };
 
 const parametres = new URLSearchParams(window.location.search);
-const jeton = parametres.get("jeton");
 const commande = parametres.get("commande");
+let jeton = parametres.get("jeton");
 
 /** Le webhook arrive en general en une seconde, parfois en dix. */
 const ATTENTES = [0, 1500, 3000, 5000, 8000, 13000];
@@ -47,8 +47,33 @@ function afficher(telechargement) {
   elements.conserver.hidden = false;
 }
 
+/**
+ * Stripe nous renvoie avec l'identifiant de commande ; le jeton, lui, n'existe
+ * qu'une fois le webhook traite. On le reclame donc, et on patiente.
+ *
+ * L'API distingue les deux cas, et l'interface doit en faire autant : « pas
+ * encore confirme » merite qu'on attende, « commande inconnue » merite qu'on le
+ * dise tout de suite plutot que de faire patienter une minute pour rien.
+ */
+class CommandeInconnue extends Error {}
+
+async function obtenirJeton() {
+  if (jeton) return jeton;
+  if (!commande) return null;
+  try {
+    const reponse = await appelerApi(CONFIG.API.order(commande));
+    if (reponse.token) jeton = reponse.token;
+    return jeton;
+  } catch (erreur) {
+    if (erreur instanceof ErreurVisiteur && erreur.genre === "introuvable") {
+      throw new CommandeInconnue();
+    }
+    throw erreur;
+  }
+}
+
 async function recuperer() {
-  if (!jeton) return null;
+  if (!(await obtenirJeton())) return null;
   try {
     return await appelerApi(CONFIG.API.download(jeton));
   } catch (erreur) {
@@ -58,12 +83,8 @@ async function recuperer() {
 }
 
 async function demarrer() {
-  // Sans jeton dans l'URL, on ne peut rien afficher : le lien complet arrive
-  // par courriel, envoye par Make apres confirmation du paiement.
-  if (!jeton) {
-    elements.etat.textContent = commande
-      ? "Votre paiement est enregistre. Le lien de telechargement vous arrive par courriel dans quelques instants."
-      : "Ce lien est incomplet. Reprenez celui recu par courriel.";
+  if (!jeton && !commande) {
+    elements.etat.textContent = "Ce lien est incomplet. Reprenez celui recu par courriel.";
     return;
   }
 
@@ -76,6 +97,11 @@ async function demarrer() {
         return;
       }
     } catch (erreur) {
+      if (erreur instanceof CommandeInconnue) {
+        elements.etat.textContent =
+          "Nous ne retrouvons pas cette commande. Utilisez le lien recu par courriel, ou ecrivez-nous.";
+        return;
+      }
       elements.etat.textContent =
         erreur instanceof ErreurVisiteur
           ? erreur.message
@@ -85,7 +111,7 @@ async function demarrer() {
   }
 
   elements.etat.textContent =
-    "Vos photos sont encore en preparation. Rechargez cette page dans une minute — votre achat est bien enregistre.";
+    "Vos photos sont encore en preparation. Rechargez cette page dans une minute — votre achat est bien enregistre, et le lien vous arrive aussi par courriel.";
 }
 
 demarrer();

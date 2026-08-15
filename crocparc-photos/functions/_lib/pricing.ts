@@ -27,9 +27,11 @@ export function isProductId(value: unknown): value is Product["id"] {
  */
 export function amountFor(product: Product["id"], photoCount: number): number {
   if (photoCount <= 0) throw new Error("aucune photo selectionnee")
-  return product === "pack"
-    ? PRODUCTS.pack.amountCents
-    : PRODUCTS.single.amountCents * photoCount
+  const unite = PRODUCTS.single.amountCents * photoCount
+  // Le forfait est un plafond, pas un prix plancher : une visite de deux photos
+  // ne doit pas etre facturee comme une visite de trente. Le bouton « tout
+  // prendre » envoie toujours `pack`, y compris sur les petites galeries.
+  return product === "pack" ? Math.min(PRODUCTS.pack.amountCents, unite) : unite
 }
 
 /** Tarifs exposes a la galerie, pour affichage seulement. */
