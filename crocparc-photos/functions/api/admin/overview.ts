@@ -7,7 +7,7 @@
  */
 
 import { AdminRefuse, exigerAdmin, refus } from "../../_lib/admin"
-import { FAILED_LOOKUPS, clientIp, hit } from "../../_lib/ratelimit"
+import { clientIp, echecs, hit } from "../../_lib/ratelimit"
 import { type Env, json } from "../../_lib/types"
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
@@ -17,7 +17,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (erreur instanceof AdminRefuse) {
       // Le delai d'une seconde d'exigerAdmin se parallelise ; le compteur, non.
       const ip = clientIp(request)
-      if (ip) await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
+      if (ip) await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, echecs("admin"))
       return refus()
     }
     throw erreur

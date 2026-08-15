@@ -19,7 +19,7 @@
  */
 
 import { fetchOriginals } from "../../_lib/originals"
-import { FAILED_LOOKUPS, clientIp, hit } from "../../_lib/ratelimit"
+import { clientIp, echecs, hit } from "../../_lib/ratelimit"
 import { type Env, json } from "../../_lib/types"
 
 const TOKEN_PATTERN = /^[a-f0-9]{32}$/
@@ -60,7 +60,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   const commande = await chargerCommande(env, jeton)
   if (!commande) {
     // Un jeton est un droit d'acces : on ne laisse pas essayer indefiniment.
-    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
+    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, echecs("download"))
     return limite.allowed ? refuse() : json(429, { error: "trop de tentatives" })
   }
 

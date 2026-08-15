@@ -57,7 +57,11 @@ def tirer_codes(nombre: int, deja_pris: set[str]) -> list[str]:
         code = "".join(secrets.choice(ALPHABET) for _ in range(CODE_LENGTH))
         if code not in deja_pris:
             codes.add(code)
-    return sorted(codes)
+    # Melange, jamais trie : imprimes dans l'ordre alphabetique, deux cartes
+    # d'un meme tirage borneraient toutes celles du milieu.
+    melange = list(codes)
+    secrets.SystemRandom().shuffle(melange)
+    return melange
 
 
 def charger_existants(chemin: Path) -> tuple[set[str], int]:

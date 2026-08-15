@@ -32,6 +32,19 @@ from .watcher import scan_inbox, start_observer
 log = logging.getLogger(__name__)
 
 
+def verrouiller(config: Config) -> InstanceLock:
+    """Prend le verrou d'instance, ou explique pourquoi c'est refuse.
+
+    Toutes les commandes le prennent, pas seulement `run` : lancer `retry`
+    pendant que le service tourne remettrait des fichiers en file sous le nez
+    du processeur, soit exactement le double traitement que le verrou existe
+    pour empecher.
+    """
+    verrou = InstanceLock(config.data_dir / "bridge.lock")
+    verrou.acquire()
+    return verrou
+
+
 def build(config: Config) -> tuple[Queue, Processor]:
     config.ensure_dirs()
     queue = Queue(config.db_path)
@@ -43,13 +56,7 @@ def build(config: Config) -> tuple[Queue, Processor]:
 def cmd_run(config: Config) -> int:
     # Le verrou avant tout le reste : deux ponts sur le meme dossier
     # traiteraient chaque photo deux fois.
-    verrou = InstanceLock(config.data_dir / "bridge.lock")
-    try:
-        verrou.acquire()
-    except AlreadyLocked as exc:
-        print(f"Demarrage refuse : {exc}", file=sys.stderr)
-        return 3
-
+    verrou = verrouiller(config)
     queue, processor = build(config)
     health = HealthServer(config, queue)
     try:
@@ -121,6 +128,7 @@ def cmd_run(config: Config) -> int:
 
 
 def cmd_once(config: Config) -> int:
+    verrou = verrouiller(config)
     queue, processor = build(config)
     scan_inbox(config, queue)
     # Un fichier n'est declare stable qu'apres BRIDGE_STABLE_SECONDS : en mode
@@ -132,10 +140,12 @@ def cmd_once(config: Config) -> int:
     steps = processor.drain()
     print(json.dumps(snapshot(queue, time.time()), ensure_ascii=False, indent=2))
     queue.close()
+    verrou.release()
     return 0 if steps >= 0 else 1
 
 
 def cmd_purge(config: Config) -> int:
+    verrou = verrouiller(config)
     queue, processor = build(config)
     efface = processor.purge_inbox()
     print(
@@ -143,6 +153,7 @@ def cmd_purge(config: Config) -> int:
         f"(retention : {config.watch_retention_days} jours)"
     )
     queue.close()
+    verrou.release()
     return 0
 
 
@@ -156,12 +167,14 @@ def cmd_status(config: Config) -> int:
 
 
 def cmd_retry(config: Config) -> int:
+    verrou = verrouiller(config)
     queue, _ = build(config)
     rows = queue.ready((FileState.FAILED,), float("inf"))
     for row in rows:
         queue.update(row.path, state=FileState.DISCOVERED, attempts=0, next_attempt_at=0.0)
     print(f"{len(rows)} fichier(s) remis dans la file")
     queue.close()
+    verrou.release()
     return 0
 
 
@@ -189,7 +202,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     setup_logging(config.log_dir, config.log_level, config.log_max_bytes, config.log_backups)
-    return COMMANDS[args.command](config)
+    try:
+        return COMMANDS[args.command](config)
+    except AlreadyLocked as exc:
+        print(f"Refuse : {exc}", file=sys.stderr)
+        print("Un pont tourne deja. Arretez le service avant de lancer cette commande.",
+              file=sys.stderr)
+        return 3
 
 
 if __name__ == "__main__":

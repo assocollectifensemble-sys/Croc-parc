@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS files (
   original_path    TEXT,
   sha1            TEXT,
   declared        INTEGER NOT NULL DEFAULT 0,
+  analyzed_at     REAL,
   attempts        INTEGER NOT NULL DEFAULT 0,
   next_attempt_at REAL NOT NULL DEFAULT 0,
   last_error      TEXT,
@@ -127,14 +128,21 @@ class Queue:
             self.conn.commit()
         self.key_salt()
 
-    def key_salt(self) -> str:
-        """Sel des cles de stockage, tire une fois pour toutes.
+    def key_salt(self, defaut: str = "") -> str:
+        """Sel des cles de stockage, stable dans le temps.
 
         Les cles R2 doivent etre indevinables : le bucket des previews est
-        public, et une cle derivee de la date et du code s'enumere. Le sel rend
-        la derivation opaque tout en restant deterministe, ce qui garde le
-        rejeu idempotent. Il vit dans bridge.db -- a sauvegarder avec le reste.
+        public, et une cle derivee de la date et du code s'enumere.
+
+        Le sel vient de BRIDGE_SHARED_SECRET quand il est configure, parce que
+        cette valeur-la est sauvegardee hors de la machine. Sinon il est tire au
+        hasard et conserve en base. Dans ce second cas, perdre bridge.db change
+        toutes les cles : les objets deja deposes sur R2 ne sont plus references
+        nulle part et echappent a la purge -- des previews d'enfants qui
+        resteraient en ligne indefiniment.
         """
+        if defaut:
+            return defaut
         with self._write_lock:
             ligne = self.conn.execute(
                 "SELECT valeur FROM meta WHERE cle = 'key_salt'"
@@ -496,6 +504,18 @@ class Queue:
              ORDER BY updated_at
             """,
             (FileState.DONE.value, before),
+        ).fetchall()
+        return [FileRow.from_sqlite(row) for row in rows]
+
+    def photos_after(self, shot_at: str) -> list[FileRow]:
+        """Photos du meme jour prises apres cet instant, deja rangees quelque part."""
+        rows = self.conn.execute(
+            """
+            SELECT * FROM files
+             WHERE is_card = 0 AND session_id IS NOT NULL AND shot_at >= ?
+               AND substr(shot_at, 1, 10) = substr(?, 1, 10)
+            """,
+            (shot_at, shot_at),
         ).fetchall()
         return [FileRow.from_sqlite(row) for row in rows]
 

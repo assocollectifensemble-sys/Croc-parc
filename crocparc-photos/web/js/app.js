@@ -78,18 +78,6 @@ export async function appelerApi(url, options = {}) {
     );
   }
 
-  // Une carte physique peut avoir servi a plusieurs visites : le serveur
-  // refuse de choisir a notre place et nous rend la liste des dates.
-  if (reponse.status === 409) {
-    const details = await reponse.json().catch(() => ({}));
-    const erreur = new ErreurVisiteur(
-      details.message ?? "Cette carte a servi pour plusieurs visites.",
-      "plusieurs",
-    );
-    erreur.dates = Array.isArray(details.dates) ? details.dates : [];
-    throw erreur;
-  }
-
   if (!reponse.ok) {
     throw new ErreurVisiteur(
       "Le service est momentanement indisponible. Reessayez dans un instant.",

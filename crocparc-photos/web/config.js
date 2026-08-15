@@ -8,9 +8,7 @@ export const CONFIG = {
   CODE_LENGTH: 6,
 
   API: {
-    gallery: (code, date) =>
-      `/api/gallery/${encodeURIComponent(code)}` +
-      (date ? `?date=${encodeURIComponent(date)}` : ""),
+    gallery: (code) => `/api/gallery/${encodeURIComponent(code)}`,
     checkout: "/api/checkout",
     download: (token) => `/api/download/${encodeURIComponent(token)}`,
     order: (commande) => `/api/order/${encodeURIComponent(commande)}`,

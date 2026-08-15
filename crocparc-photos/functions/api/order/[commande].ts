@@ -10,7 +10,7 @@
  * ne donne rien de plus que le jeton lui-meme, et les essais sont comptes.
  */
 
-import { FAILED_LOOKUPS, clientIp, hit } from "../../_lib/ratelimit"
+import { clientIp, echecs, hit } from "../../_lib/ratelimit"
 import { type Env, json } from "../../_lib/types"
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -21,7 +21,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
 
   const commande = String(params.commande ?? "").trim()
   const echec = async () => {
-    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
+    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, echecs("order"))
     return limite.allowed
       ? json(404, { error: "commande introuvable" })
       : json(429, { error: "trop de tentatives" })
@@ -30,12 +30,19 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env, params })
   if (!UUID_PATTERN.test(commande)) return echec()
 
   const ligne = await env.DB.prepare(
-    "SELECT status, download_token FROM orders WHERE id = ?",
+    `SELECT o.status, o.download_token, s.status AS session_status
+       FROM orders o JOIN sessions s ON s.id = o.session_id
+      WHERE o.id = ?`,
   )
     .bind(commande)
-    .first<{ status: string; download_token: string | null }>()
+    .first<{ status: string; download_token: string | null; session_status: string }>()
 
   if (!ligne) return echec()
+
+  // Galerie purgee : la commande reste dans les comptes, mais il n'y a plus
+  // rien a telecharger. Sans ce test, la page de retour patienterait
+  // indefiniment sur un « paiement en cours de confirmation » trompeur.
+  if (ligne.session_status === "purged") return echec()
 
   // Paiement pas encore confirme par Stripe : ce n'est pas une erreur, c'est
   // une attente. La page de retour reessaie.

@@ -258,54 +258,20 @@ elements.toutSelectionner.addEventListener("click", () => {
 
 /* --- demarrage ------------------------------------------------------------ */
 /**
- * Plusieurs visites partagent ce code : on demande laquelle est la sienne
- * plutot que d'en choisir une. Montrer la mauvaise reviendrait a montrer les
- * photos d'une autre famille.
+ * Charge la galerie. La date n'est plus un parametre de selection -- le serveur
+ * refuse desormais de servir quoi que ce soit quand deux visites partagent un
+ * code, et demander la date ne protegeait rien : quiconque tient la carte
+ * connait aussi celle de la visite d'a cote.
  */
-function demanderLaDate(message, dates) {
-  elements.chargement.hidden = true;
-  elements.principal.innerHTML = "";
-
-  const bloc = document.createElement("div");
-  bloc.className = "vide";
-
-  const titre = document.createElement("h2");
-  titre.textContent = "Quel jour etes-vous venu ?";
-  const texte = document.createElement("p");
-  texte.textContent = message;
-  bloc.append(titre, texte);
-
-  const choix = document.createElement("div");
-  choix.className = "choix-dates";
-  dates.forEach((date) => {
-    const bouton = document.createElement("button");
-    bouton.className = "bouton";
-    bouton.type = "button";
-    bouton.textContent = formaterDate(date);
-    bouton.addEventListener("click", async () => {
-      elements.principal.innerHTML = "";
-      elements.chargement.hidden = false;
-      if (await charger(date)) afficherGalerie();
-    });
-    choix.append(bouton);
-  });
-  bloc.append(choix);
-  elements.principal.append(bloc);
-}
-
 async function charger(date) {
   try {
     etat.galerie = await appelerApi(CONFIG.API.gallery(etat.code, date));
   } catch (erreur) {
-    if (erreur instanceof ErreurVisiteur && erreur.genre === "plusieurs") {
-      demanderLaDate(erreur.message, erreur.dates);
-    } else {
-      afficherErreur(
-        erreur instanceof ErreurVisiteur
-          ? erreur.message
-          : "Impossible d'afficher vos photos pour le moment.",
-      );
-    }
+    afficherErreur(
+      erreur instanceof ErreurVisiteur
+        ? erreur.message
+        : "Impossible d'afficher vos photos pour le moment.",
+    );
     return false;
   }
   return true;

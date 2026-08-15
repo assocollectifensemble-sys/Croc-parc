@@ -154,6 +154,23 @@ describe("purge a 30 jours", () => {
     expect(compter("photos")).toBe(0)
   })
 
+  it("efface les previews orphelines, que la base ne connait plus", async () => {
+    // Une preview deposee sur R2 dont la declaration a echoue, ou dont la
+    // ligne a disparu avec bridge.db : aucune jointure ne la retrouve, et sans
+    // la passe par prefixe de date elle resterait en ligne pour toujours.
+    const vieuxJour = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10)
+    const jourRecent = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10)
+    previews.objets.set(`${vieuxJour}/orpheline-oubliee_p.jpg`, new Uint8Array([1]))
+    previews.objets.set(`${vieuxJour}/orpheline-oubliee_t.jpg`, new Uint8Array([1]))
+    previews.objets.set(`${jourRecent}/encore-valable_p.jpg`, new Uint8Array([1]))
+
+    const bilan = await purger(env, new Date())
+
+    expect(bilan.objets_orphelins).toBe(2)
+    expect(previews.objets.has(`${vieuxJour}/orpheline-oubliee_p.jpg`)).toBe(false)
+    expect(previews.objets.has(`${jourRecent}/encore-valable_p.jpg`)).toBe(true)
+  })
+
   it("traite plus de sessions que la taille d'un lot", async () => {
     for (let index = 0; index < 60; index++) {
       creerVisite(`CODE${index}`, "2026-09-01T00:00:00.000Z", 1)

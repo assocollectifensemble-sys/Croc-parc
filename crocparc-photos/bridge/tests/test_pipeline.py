@@ -20,6 +20,7 @@ from bridge.config import Config
 from bridge.imaging import make_preview, open_oriented, read_metadata, sha1_of
 from bridge.models import FileState, SessionStatus
 from bridge.processor import Processor
+from bridge.qr import ORPHAN_CODE
 from bridge.queue import Queue
 from bridge.uploader import LocalStorage, NullRegistrar
 from bridge.watcher import scan_inbox
@@ -35,10 +36,15 @@ def md5(path: Path) -> str:
 
 
 def run(processor: Processor, config: Config, queue: Queue, now: float = T0) -> int:
-    """Un cycle complet : balayage, mesure de stabilite, puis traitement."""
+    """Un cycle complet : balayage, mesure de stabilite, puis traitement.
+
+    On avance au-dela du delai de grace : en production il laisse a une carte
+    livree en desordre le temps de se presenter, ici il n'a pas d'interet.
+    """
     scan_inbox(config, queue)
     processor.tick(now=now)  # premiere mesure de taille
-    return processor.drain(now=now + config.stable_seconds + 1)
+    processor.drain(now=now + config.stable_seconds + 1)
+    return processor.drain(now=now + config.stable_seconds + config.assign_grace_seconds + 1)
 
 
 def deposer_journee(inbox: Path) -> dict[str, list[Path]]:
@@ -237,6 +243,7 @@ def test_fichier_en_cours_d_ecriture_n_est_pas_traite(config, queue, processor):
     assert queue.get(chemin).state is FileState.DISCOVERED  # premiere mesure de la taille finale
 
     processor.drain(now=T0 + 13)
+    processor.drain(now=T0 + 13 + config.assign_grace_seconds + 1)
     ligne = queue.get(chemin)
     assert ligne.state is FileState.DONE
     # L'original archive est le fichier complet : aucun JPEG tronque n'est passe.
@@ -571,3 +578,109 @@ def test_carte_reutilisee_apres_expiration_ouvre_bien_une_session(config, queue,
     assert sessions["K7M2QP"].photo_count == 1
     assert "ORPHAN" not in sessions
     assert not [e for e in queue.events() if e["kind"] == "card_quarantine"]
+
+
+def test_carte_livree_en_desordre_ne_range_pas_chez_le_groupe_precedent(config, queue, processor):
+    """Le cas realiste : la photo precede sa carte de quelques secondes.
+
+    Le delai de grace laisse la carte se presenter avant tout rangement. Sans
+    lui, la photo atterrissait dans la session du groupe PRECEDENT, et une fois
+    declaree elle ne pouvait plus en sortir.
+    """
+    make_card(config.watch_dir / "DSC00001.JPG", "Q4RT5Y", datetime(2026, 10, 15, 9, 0))
+    photo_x = make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 9, 5), seed=2)
+    run(processor, config, queue)
+    session_x = queue.session(queue.get(photo_x).session_id)
+
+    # Groupe suivant : sa photo est deposee AVANT sa carte, quelques secondes.
+    photo_y = make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 10, 15, 14, 5), seed=4)
+    scan_inbox(config, queue)
+    processor.tick(now=T0 + 100)
+    processor.drain(now=T0 + 105)  # analysee, mais pas encore rangee
+    assert queue.get(photo_y).session_id is None
+
+    make_card(config.watch_dir / "DSC00003.JPG", "W8XZ3N", datetime(2026, 10, 15, 14, 0))
+    run(processor, config, queue, now=T0 + 110)
+
+    session_y = queue.session(queue.get(photo_y).session_id)
+    assert session_y.code == "W8XZ3N", "la photo a ete rangee chez le groupe precedent"
+    assert session_y.id != session_x.id
+    assert queue.refresh_photo_count(session_x.id) == 1
+
+
+def test_carte_arrivee_apres_publication_leve_une_alerte(config, queue, processor):
+    """Le cas residuel, que le delai de grace ne couvre pas.
+
+    Si la carte se presente longtemps apres que la photo a ete publiee, le pont
+    ne la deloge PAS : elle est deja declaree, la deplacer la ferait exister
+    dans deux sessions. Il leve une alerte, et c'est a l'admin de trancher.
+    Mieux vaut un incident visible qu'un deplacement silencieux qui duplique.
+    """
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    run(processor, config, queue)
+
+    make_card(config.watch_dir / "DSC00003.JPG", "Q4RT5Y", datetime(2026, 10, 20, 9, 0))
+    photo_x = make_photo(config.watch_dir / "DSC00004.JPG", datetime(2026, 10, 20, 9, 5), seed=4)
+    run(processor, config, queue, now=T0 + 100)
+    session_x = queue.session(queue.get(photo_x).session_id)
+
+    photo_y = make_photo(config.watch_dir / "DSC00006.JPG", datetime(2026, 10, 20, 14, 5), seed=6)
+    run(processor, config, queue, now=T0 + 200)  # publiee chez X, faute de carte
+    assert queue.get(photo_y).session_id == session_x.id
+
+    make_card(config.watch_dir / "DSC00005.JPG", "K7M2QP", datetime(2026, 10, 20, 14, 0))
+    run(processor, config, queue, now=T0 + 300)
+
+    incidents = {e["kind"] for e in queue.events()}
+    assert "card_quarantine" in incidents
+    assert "reassign_conflict" in incidents, "l'incident doit etre visible en admin"
+
+
+def test_carte_en_quarantaine_finit_par_etre_purgee(config, queue, processor):
+    """Sans chemin d'archive, la purge la refusait a chaque passage, indefiniment."""
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    run(processor, config, queue)
+    quarantaine = make_card(
+        config.watch_dir / "DSC00002.JPG", "K7M2QP", datetime(2026, 10, 20, 9, 0)
+    )
+    run(processor, config, queue, now=T0 + 100)
+    assert any(e["kind"] == "card_quarantine" for e in queue.events())
+
+    efface = processor.purge_inbox(now=time.time() + 40 * 24 * 3600)
+    assert not quarantaine.exists(), "la carte en quarantaine encombre l'inbox pour toujours"
+    assert efface == 2
+    assert not [e for e in queue.events() if e["kind"] == "purge_conflict"]
+
+
+def test_sel_des_cles_derive_du_secret_partage(config, queue, tmp_path):
+    """Perdre bridge.db ne doit pas changer toutes les cles de stockage.
+
+    Sinon les objets deja deposes sur R2 ne sont plus references nulle part et
+    echappent a la purge : des previews d'enfants resteraient en ligne.
+    """
+    configuration = dataclasses.replace(config, shared_secret="un-secret-partage-de-32-caracteres!!")
+    premier = Processor(
+        configuration, queue, LocalStorage(configuration.output_dir), NullRegistrar()
+    )
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.watch_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    run(premier, configuration, queue)
+    cle = queue.get(photo).preview_key
+
+    # Base perdue, tout est refait a neuf : les cles doivent etre identiques.
+    config.db_path.unlink()
+    neuve = Queue(config.db_path)
+    neuve.migrate()
+    second = Processor(
+        configuration, neuve, LocalStorage(configuration.output_dir), NullRegistrar()
+    )
+    run(second, configuration, neuve, now=T0 + 500)
+    assert neuve.get(photo).preview_key == cle
+    neuve.close()
+
+
+def test_horloge_du_boitier_suspecte_est_signalee(config, queue, processor):
+    make_card(config.watch_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    run(processor, config, queue)
+    # 2026-10-15 est loin de la date systeme du test : l'alerte doit tomber.
+    assert any(e["kind"] == "horloge_suspecte" for e in queue.events())

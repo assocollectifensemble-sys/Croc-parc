@@ -44,4 +44,18 @@ export class FakeR2 {
   async delete(cle: string): Promise<void> {
     this.objets.delete(cle)
   }
+
+  async list(options: { prefix?: string; cursor?: string; limit?: number } = {}) {
+    const prefixe = options.prefix ?? ""
+    const toutes = [...this.objets.keys()].filter((cle) => cle.startsWith(prefixe)).sort()
+    const debut = options.cursor ? Number(options.cursor) : 0
+    const limite = options.limit ?? 1000
+    const page = toutes.slice(debut, debut + limite)
+    const suivant = debut + limite
+    return {
+      objects: page.map((key) => ({ key })),
+      truncated: suivant < toutes.length,
+      cursor: String(suivant),
+    }
+  }
 }

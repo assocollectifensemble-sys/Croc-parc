@@ -102,6 +102,7 @@ class FileRow:
     original_path: str | None = None
     sha1: str | None = None
     declared: bool = False
+    analyzed_at: float | None = None
     attempts: int = 0
     next_attempt_at: float = 0.0
     last_error: str | None = None
@@ -127,6 +128,7 @@ class FileRow:
             original_path=row["original_path"],
             sha1=row["sha1"],
             declared=bool(row["declared"]),
+            analyzed_at=row["analyzed_at"],
             attempts=row["attempts"],
             next_attempt_at=row["next_attempt_at"],
             last_error=row["last_error"],

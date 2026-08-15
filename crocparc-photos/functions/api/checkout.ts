@@ -7,7 +7,7 @@
  */
 
 import { amountFor, isProductId, PRODUCTS } from "../_lib/pricing"
-import { FAILED_LOOKUPS, clientIp, hit } from "../_lib/ratelimit"
+import { clientIp, echecs, hit } from "../_lib/ratelimit"
 import { stripeRequest, StripeError } from "../_lib/stripe"
 import { type Env, isGalleryCode, json } from "../_lib/types"
 
@@ -19,10 +19,14 @@ async function cleIdempotence(
   sessionId: string,
   produit: string,
   photos: string[],
+  jour: string,
 ): Promise<string> {
+  // Le jour entre dans la cle : Stripe garde ses cles 24 h, et sans cela un
+  // second essai le lendemain recupererait une session de paiement expiree,
+  // donc une URL morte.
   const empreinte = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(`${sessionId}|${produit}|${[...photos].sort().join(",")}`),
+    new TextEncoder().encode(`${jour}|${sessionId}|${produit}|${[...photos].sort().join(",")}`),
   )
   return [...new Uint8Array(empreinte)]
     .slice(0, 16)
@@ -38,7 +42,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // « code inconnu » et « code valide mais selection vide » ne rendent pas le
   // meme statut, et la limitation de /api/gallery ne protegerait plus rien.
   const refuser = async (statut: number, corps: Record<string, unknown>) => {
-    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, FAILED_LOOKUPS)
+    const limite = await hit(env.DB, env.BRIDGE_SHARED_SECRET, ip, echecs("checkout"))
     if (!limite.allowed) {
       return new Response(JSON.stringify({ error: "trop de tentatives" }), {
         status: 429,
@@ -81,13 +85,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     .bind(code, maintenant)
     .all<{ id: string; session_date: string }>()
 
-  // Meme regle que la galerie : jamais de choix a la place du visiteur.
-  const session = date
-    ? sessions.find((candidate) => candidate.session_date === String(date))
-    : sessions.length === 1
-      ? sessions[0]
-      : undefined
+  // Meme regle que la galerie, mot pour mot : deux sessions actives sous un
+  // meme code sont indemelables, et la date de visite n'est pas un secret --
+  // quiconque tient la carte la connait aussi bien pour la visite d'a cote.
+  // Sans ce garde-fou, ce que la galerie refuse d'afficher pouvait tout de
+  // meme etre achete, puis telecharge en pleine resolution.
+  if (sessions.length > 1) {
+    console.error(`plusieurs sessions actives pour le code ${code}, achat refuse`)
+    return refuser(404, { error: "galerie introuvable" })
+  }
+  const session = sessions[0]
   if (!session) return refuser(404, { error: "galerie introuvable" })
+  if (date && session.session_date !== String(date)) {
+    return refuser(404, { error: "galerie introuvable" })
+  }
 
   // Les identifiants viennent du client : on ne garde que ceux qui existent
   // vraiment dans CETTE session. Une photo d'une autre visite est ignoree.
@@ -98,10 +109,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     .all<{ id: string }>()
 
   const disponibles = new Set(photos.map((photo) => photo.id))
+  // `new Set` et pas seulement `filter` : sans deduplication, un client qui
+  // envoie trois fois le meme identifiant paie trois fois la meme photo.
   const retenues =
     produit === "pack"
       ? [...disponibles]
-      : (demandees as unknown[]).map(String).filter((id) => disponibles.has(id))
+      : [...new Set((demandees as unknown[]).map(String))].filter((id) => disponibles.has(id))
 
   if (retenues.length === 0) return refuser(400, { error: "aucune photo selectionnee" })
 
@@ -144,7 +157,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       // Idempotence : derivee du contenu de la commande, pas de son
       // identifiant -- sinon deux clics donnent deux cles differentes et la
       // protection ne protege rien.
-      await cleIdempotence(session.id, produit, retenues),
+      await cleIdempotence(session.id, produit, retenues, maintenant.slice(0, 10)),
     )
   } catch (erreur) {
     if (erreur instanceof StripeError) {

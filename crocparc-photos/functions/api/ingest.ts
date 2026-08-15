@@ -107,7 +107,12 @@ async function ensureSession(
   }
 
   const ttl = Number(env.SESSION_TTL_DAYS ?? "30") || 30
-  const expire = new Date(maintenant.getTime() + ttl * 86_400_000)
+  // A partir de la date de VISITE, pas de l'instant d'ingestion : sinon une
+  // declaration retardee (pont eteint un week-end, tunnel coupe) prolonge la
+  // galerie au-dela de la fenetre de quarantaine du pont, et la carte peut
+  // rouvrir une session pendant que l'ancienne vit encore.
+  const expire = new Date(`${charge.session_date}T00:00:00.000Z`)
+  expire.setUTCDate(expire.getUTCDate() + ttl)
   const id = crypto.randomUUID()
   const statut = charge.code === "ORPHAN" ? "orphan" : "active"
 

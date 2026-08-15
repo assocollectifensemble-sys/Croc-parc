@@ -22,6 +22,7 @@ interface Bilan {
   photos: number
   objets_previews: number
   objets_originaux: number
+  objets_orphelins: number
   commandes: number
   limitations: number
   erreurs: string[]
@@ -36,6 +37,7 @@ export async function purger(env: Env, maintenant = new Date()): Promise<Bilan> 
     photos: 0,
     objets_previews: 0,
     objets_originaux: 0,
+    objets_orphelins: 0,
     commandes: 0,
     limitations: 0,
     erreurs: [],
@@ -104,6 +106,13 @@ export async function purger(env: Env, maintenant = new Date()): Promise<Bilan> 
     }
   }
 
+  // Deuxieme passe, par prefixe de date : la jointure sur `photos` ne voit que
+  // ce qui a ete declare en base. Une preview deposee sur R2 dont la
+  // declaration a echoue -- ou dont la ligne a disparu avec bridge.db -- n'est
+  // referencee nulle part et resterait en ligne pour toujours. Les cles
+  // commencent par la date de la visite, ce qui suffit a la retrouver.
+  bilan.objets_orphelins = await purgerParDate(env, maintenant, bilan)
+
   // Les compteurs de limitation de debit n'ont pas a s'accumuler.
   const fenetre = Math.floor(maintenant.getTime() / 1000) - 86_400
   const limitations = await env.DB.prepare("DELETE FROM rate_limits WHERE window_start < ?")
@@ -112,6 +121,47 @@ export async function purger(env: Env, maintenant = new Date()): Promise<Bilan> 
   bilan.limitations = limitations.meta?.changes ?? 0
 
   return bilan
+}
+
+/**
+ * Efface tout objet du bucket des previews dont la date de prefixe a depasse la
+ * duree de vie, qu'il soit connu de la base ou non.
+ *
+ * On remonte 400 jours en arriere, largement au-dela de la retention : c'est
+ * peu de requetes de listage (une par jour, sur des prefixes vides la plupart
+ * du temps) pour la garantie qu'aucune photo d'enfant ne traine dans un bucket
+ * public parce qu'une ligne a disparu.
+ */
+async function purgerParDate(env: Env, maintenant: Date, bilan: Bilan): Promise<number> {
+  const RETENTION_JOURS = 30
+  const REMONTEE_JOURS = 400
+  let effaces = 0
+
+  for (let recul = RETENTION_JOURS + 1; recul <= REMONTEE_JOURS; recul++) {
+    const jour = new Date(maintenant.getTime() - recul * 86_400_000)
+      .toISOString()
+      .slice(0, 10)
+    let curseur: string | undefined
+    do {
+      let liste
+      try {
+        liste = await env.PREVIEWS.list({ prefix: `${jour}/`, cursor: curseur, limit: 1000 })
+      } catch (erreur) {
+        bilan.erreurs.push(`listage ${jour} : ${String(erreur)}`)
+        break
+      }
+      for (const objet of liste.objects) {
+        try {
+          await env.PREVIEWS.delete(objet.key)
+          effaces++
+        } catch (erreur) {
+          bilan.erreurs.push(`orphelin ${objet.key} : ${String(erreur)}`)
+        }
+      }
+      curseur = liste.truncated ? liste.cursor : undefined
+    } while (curseur)
+  }
+  return effaces
 }
 
 export default {

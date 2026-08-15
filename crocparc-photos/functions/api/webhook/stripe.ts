@@ -94,9 +94,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
     .bind(new Date().toISOString(), email, jeton, commande)
     .run()
 
+  // Deux rejeux simultanes : un seul UPDATE passe. Le perdant a tire un jeton
+  // qui n'a pas ete ecrit -- l'envoyer a Make donnerait au client un lien de
+  // telechargement mort. On relit donc celui qui fait foi.
+  const ecrite = await env.DB.prepare(
+    "SELECT download_token FROM orders WHERE id = ?",
+  )
+    .bind(commande)
+    .first<{ download_token: string | null }>()
+  const jetonFinal = ecrite?.download_token ?? jeton
+
   // Le reste est du confort : il ne doit ni retarder la reponse a Stripe, ni
   // pouvoir invalider une commande deja payee.
-  waitUntil(apresPaiement(env, commande, jeton, email))
+  waitUntil(apresPaiement(env, commande, jetonFinal, email))
 
   return json(200, { order_id: commande })
 }

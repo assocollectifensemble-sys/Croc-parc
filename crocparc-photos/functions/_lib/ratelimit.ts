@@ -24,11 +24,16 @@ export interface RateLimitRule {
   windowSeconds: number
 }
 
-export const FAILED_LOOKUPS: RateLimitRule = {
-  name: "miss",
-  limit: 10,
-  windowSeconds: 600,
+/**
+ * Un seau par surface : dix mauvais jetons d'administration ne doivent pas
+ * verrouiller la galerie pour toute l'adresse du parc.
+ */
+export function echecs(surface: string, limit = 10): RateLimitRule {
+  return { name: `miss:${surface}`, limit, windowSeconds: 600 }
 }
+
+/** Compat : saisie de code dans la galerie. */
+export const FAILED_LOOKUPS: RateLimitRule = echecs("gallery")
 
 export const SUCCESSFUL_LOOKUPS: RateLimitRule = {
   name: "hit",

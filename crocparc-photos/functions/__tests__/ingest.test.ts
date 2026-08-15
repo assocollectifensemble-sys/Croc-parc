@@ -108,9 +108,10 @@ describe("enregistrement", () => {
     expect(session.card_number).toBe(427)
     expect(session.photo_count).toBe(1)
     expect(session.status).toBe("active")
-    // expires_at = created_at + 30 jours
-    const ecart = Date.parse(session.expires_at) - Date.parse(session.created_at)
-    expect(Math.round(ecart / 86_400_000)).toBe(30)
+    // expires_at se calcule depuis la DATE DE VISITE, pas depuis l'instant
+    // d'ingestion : une declaration retardee ne doit pas prolonger la galerie
+    // au-dela de la fenetre de quarantaine du pont.
+    expect(session.expires_at.slice(0, 10)).toBe("2026-11-14")
 
     const photo = db.db.prepare("SELECT * FROM photos").get() as any
     expect(photo.original_path).toBe("2026-10-15/K7M2QP/DSC01234.JPG")

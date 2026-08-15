@@ -51,7 +51,7 @@ class Processor:
         self.storage = storage
         self.registrar = registrar
         self.inventory = load_inventory(config.cards_inventory_csv)
-        self.key_salt = queue.key_salt()
+        self.key_salt = queue.key_salt(config.shared_secret)
 
     def _object_key(self, session: SessionRow, filename: str, suffixe: str) -> str:
         """Cle de stockage d'un derive : indevinable, mais stable au rejeu.
@@ -185,6 +185,7 @@ class Processor:
         shot_at = self._shot_at_iso(metadata.shot_at, row.path)
         fields = {
             "state": FileState.ANALYZED,
+            "analyzed_at": now,
             "shot_at": shot_at,
             "width": metadata.width,
             "height": metadata.height,
@@ -206,7 +207,23 @@ class Processor:
         return True
 
     def _process(self, row: FileRow, now: float) -> bool:
-        return self._process_card(row) if row.is_card else self._process_photo(row)
+        if row.is_card:
+            return self._process_card(row)
+
+        # Delai de grace avant de ranger une photo : le FTP livre normalement
+        # dans l'ordre de prise de vue, mais une reprise apres echec peut faire
+        # arriver une photo avant la carte qui la precede. Rangee tout de suite,
+        # elle atterrit dans la session du groupe PRECEDENT -- et une fois
+        # declaree, elle ne peut plus en sortir sans risquer d'exister en
+        # double. Deux minutes d'attente suffisent a laisser la carte se
+        # presenter, et le visiteur consulte sa galerie des heures plus tard.
+        if (
+            row.analyzed_at is not None
+            and now - row.analyzed_at < self.config.assign_grace_seconds
+        ):
+            return False
+
+        return self._process_photo(row)
 
     def _process_card(self, row: FileRow) -> bool:
         """Ouvre une session et met la photo de la carte de cote, jamais publiee."""
@@ -239,6 +256,12 @@ class Processor:
             # is_card reste a 1 : la carte demeure une frontiere de session,
             # mais sans session_id, donc ce qui suit part en orphelines.
             self.queue.update(row.path, state=FileState.DONE, sha1=sha1, session_id=None)
+            # Meme rattrapage que pour une carte valide : si une photo de ce
+            # groupe a ete traitee avant sa carte -- livraison FTP inversee, ou
+            # simple echec transitoire de la carte -- elle est rangee dans la
+            # session du groupe PRECEDENT. Sans ce rappel, elle y reste et s'y
+            # publie, ce que le message de quarantaine promet pourtant d'eviter.
+            self._sortir_de_leur_session(row.shot_at)
             return True
 
         session = self.queue.get_or_create_session(
@@ -344,6 +367,16 @@ class Processor:
 
     def _archive_path(self, row: FileRow) -> Path | None:
         """Ou l'original (ou la photo de carte) est archive localement."""
+        if row.is_card and not row.session_id and row.code and row.shot_at:
+            # Carte mise en quarantaine : elle n'a pas de session, mais son
+            # archive existe bel et bien. Sans ce cas, la purge la refuse
+            # indefiniment et journalise un avertissement a chaque passage.
+            return (
+                self.config.originals_dir
+                / "cards"
+                / row.shot_at[:10]
+                / f"{row.code}-quarantaine-{row.filename}"
+            )
         if not row.session_id:
             return None
         session = self.queue.session(row.session_id)
@@ -403,6 +436,24 @@ class Processor:
             log.warning("DateTimeOriginal absent, repli sur la date du fichier",
                         extra={"file": path.name})
             shot_at = datetime.fromtimestamp(path.stat().st_mtime)
+
+        # Une pile d'horloge morte rend toujours la meme date : toutes les
+        # cartes et toutes les photos tombent alors dans le meme « jour », et
+        # les groupes se melangent. On ne peut pas corriger, mais on peut
+        # prevenir.
+        ecart = abs((datetime.now() - shot_at).total_seconds())
+        if ecart > 48 * 3600:
+            log.warning(
+                "horodatage du boitier tres eloigne de l'heure du mini-PC",
+                extra={"file": path.name, "shot_at": shot_at.isoformat(),
+                       "ecart_heures": round(ecart / 3600)},
+            )
+            self.queue.record_event(
+                "horloge_suspecte",
+                f"{path.name}: pris le {shot_at.isoformat()} selon le boitier "
+                f"({round(ecart / 3600)} h d'ecart avec le mini-PC)",
+                path,
+            )
         return shot_at.replace(tzinfo=self.config.tz).isoformat(timespec="seconds")
 
     def _card_number(self, card) -> int | None:
@@ -534,6 +585,40 @@ class Processor:
             )
             self.queue.record_event("purge", f"{efface} fichier(s) efface(s) de l'inbox")
         return efface
+
+    def _sortir_de_leur_session(self, depuis_shot_at: str) -> None:
+        """Deloge les photos rangees dans la session d'un autre groupe.
+
+        Appele quand une carte mise en quarantaine revele apres coup que les
+        photos qui la suivent n'appartiennent pas au groupe precedent. Elles
+        repartent en analyse et retomberont en session orpheline, faute de
+        carte valide devant elles.
+        """
+        for row in self.queue.photos_after(depuis_shot_at):
+            if row.declared or row.state not in REASSIGNABLE:
+                log.warning(
+                    "photo deja publiee chez le groupe precedent",
+                    extra={"file": row.filename, "state": row.state.value},
+                )
+                self.queue.record_event(
+                    "reassign_conflict",
+                    f"{row.filename} deja publiee dans une autre session, non delogee",
+                    row.path,
+                )
+                continue
+            self._oublier_derives(row)
+            self.queue.update(
+                row.path,
+                state=FileState.ANALYZED,
+                session_id=None,
+                preview_key=None,
+                thumb_key=None,
+                original_path=None,
+            )
+            log.info("photo delogee apres quarantaine", extra={"file": row.filename})
+            self.queue.record_event(
+                "reassigned", f"{row.filename} delogee apres mise en quarantaine", row.path
+            )
 
     def _oublier_derives(self, row: FileRow) -> None:
         """Retire du stockage les previews d'une photo qui change de session."""

@@ -112,6 +112,7 @@ class Config:
     rescan_interval: float
     extensions: tuple[str, ...]
     watch_retention_days: int
+    assign_grace_seconds: float
     purge_interval: float
 
     # Reprise sur erreur
@@ -243,6 +244,7 @@ class Config:
             rescan_interval=_get_float("BRIDGE_RESCAN_INTERVAL", 30.0),
             extensions=extensions,
             watch_retention_days=_get_int("WATCH_RETENTION_DAYS", 15),
+            assign_grace_seconds=_get_float("BRIDGE_ASSIGN_GRACE_SECONDS", 120.0),
             purge_interval=_get_float("BRIDGE_PURGE_INTERVAL", 3600.0),
             base_backoff=_get_float("BRIDGE_BASE_BACKOFF", 5.0),
             max_backoff=_get_float("BRIDGE_MAX_BACKOFF", 300.0),

@@ -218,17 +218,7 @@ describe("checkout", () => {
     expect(db.db.prepare("SELECT COUNT(*) n FROM orders").get()).toEqual({ n: 0 })
   })
 
-  it("refuse de choisir entre deux visites du meme code", async () => {
-    creerVisite("K7M2QP", 3, "2026-10-15")
-    creerVisite("K7M2QP", 3, "2026-11-02")
-    expect((await demanderPaiement({ code: "K7M2QP", product: "pack" })).status).toBe(404)
-    const avecDate = await demanderPaiement({
-      code: "K7M2QP",
-      product: "pack",
-      session_date: "2026-10-15",
-    })
-    expect(avecDate.status).toBe(200)
-  })
+
 })
 
 /* --- webhook -------------------------------------------------------------- */
@@ -550,5 +540,44 @@ describe("recuperation du lien apres paiement", () => {
   it("refuse un identifiant qui n'est pas un uuid", async () => {
     expect((await demanderCommande("../../etc/passwd")).status).toBe(404)
     expect((await demanderCommande("1")).status).toBe(404)
+  })
+})
+
+/* --- ce que la galerie refuse, le paiement doit le refuser aussi ---------- */
+describe("carte utilisee par deux visites : le checkout suit la galerie", () => {
+  it("refuse l'achat, avec ou sans date", async () => {
+    // Sans ce garde-fou, ce que la galerie refuse d'afficher pouvait tout de
+    // meme etre achete puis telecharge en pleine resolution.
+    creerVisite("K7M2QP", 3, "2026-10-15")
+    creerVisite("K7M2QP", 4, "2026-11-02")
+
+    expect((await demanderPaiement({ code: "K7M2QP", product: "pack" })).status).toBe(404)
+    expect(
+      (await demanderPaiement({ code: "K7M2QP", product: "pack", session_date: "2026-10-15" }))
+        .status,
+    ).toBe(404)
+    expect((db.db.prepare("SELECT COUNT(*) n FROM orders").get() as any).n).toBe(0)
+  })
+
+  it("une date qui ne correspond pas a la seule visite est refusee", async () => {
+    creerVisite("K7M2QP", 3, "2026-10-15")
+    const reponse = await demanderPaiement({
+      code: "K7M2QP",
+      product: "pack",
+      session_date: "2026-11-02",
+    })
+    expect(reponse.status).toBe(404)
+  })
+})
+
+describe("doublons et idempotence", () => {
+  it("ne facture pas trois fois la meme photo", async () => {
+    const { ids } = creerVisite("K7M2QP", 3)
+    const reponse = await demanderPaiement({
+      code: "K7M2QP",
+      product: "single",
+      photo_ids: [ids[0], ids[0], ids[0]],
+    })
+    expect(((await reponse.json()) as any).amount_cents).toBe(500)
   })
 })
