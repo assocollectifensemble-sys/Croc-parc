@@ -4,26 +4,37 @@ compatibility_date = "2024-09-23"
 
 # Base de donnees. L'identifiant est cree une fois avec :
 #   npx wrangler d1 create crocparc-photos
+# En local, wrangler cree une base SQLite sous .wrangler/state ; l'identifiant
+# ci-dessous n'est utilise qu'en production.
 [[d1_databases]]
 binding = "DB"
 database_name = "crocparc-photos"
 database_id = "a-remplacer-apres-wrangler-d1-create"
-# En local, wrangler cree une base SQLite sous .wrangler/state, l'identifiant
-# ci-dessus n'est utilise qu'en production.
 migrations_dir = "db/migrations"
 
-# Previews et vignettes uniquement : les originaux restent au parc.
+# Previews et vignettes. Ce bucket est le seul en lecture publique ; ses cles
+# sont derivees d'un sel local par le pont, donc indevinables.
 [[r2_buckets]]
 binding = "PREVIEWS"
 bucket_name = "crocparc-previews"
 
-# Bucket prive, alimente a la demande par le pont apres paiement.
+# Originaux vendus. Bucket prive, alimente a la demande par le pont apres
+# paiement, et servi uniquement a travers /api/download/:token.
 [[r2_buckets]]
 binding = "ORIGINALS"
 bucket_name = "crocparc-originals"
 
 [vars]
 SESSION_TTL_DAYS = "30"
+# Domaine public du bucket des previews (domaine R2 ou domaine personnalise).
+# Sans lui, /api/gallery repond 500 plutot que de servir une galerie vide.
+PREVIEWS_BASE_URL = "https://previews.crocparc.re"
+PUBLIC_BASE_URL = "https://photos.crocparc.re"
+# URL de POST /fetch-original sur le pont, exposee par le tunnel Cloudflare.
+BRIDGE_FETCH_URL = "https://pont.crocparc.re/fetch-original"
 
 # Secrets, jamais dans ce fichier :
-#   npx wrangler pages secret put BRIDGE_SHARED_SECRET
+#   npx wrangler pages secret put BRIDGE_SHARED_SECRET   (identique au pont)
+#   npx wrangler pages secret put STRIPE_SECRET_KEY
+#   npx wrangler pages secret put STRIPE_WEBHOOK_SECRET
+#   npx wrangler pages secret put ADMIN_TOKEN

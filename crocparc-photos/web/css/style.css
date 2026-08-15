@@ -1,0 +1,489 @@
+/* Croc Parc Photos - feuille de style unique.
+   Mobile d'abord : le visiteur consulte sa galerie depuis son telephone,
+   souvent avec une connexion moyenne et une seule main. */
+
+:root {
+  color-scheme: light dark;
+
+  --vert-profond: #1c3a2e;
+  --vert: #2f6b4f;
+  --vert-clair: #4a9a71;
+  --sable: #f4efe4;
+  --sable-fonce: #e6dcc8;
+  --ambre: #d98b3a;
+  --encre: #16211c;
+  --gris: #6b7a72;
+  --blanc: #ffffff;
+  --rouge: #b3453a;
+
+  --fond: var(--sable);
+  --fond-carte: var(--blanc);
+  --texte: var(--encre);
+  --texte-doux: var(--gris);
+  --bordure: var(--sable-fonce);
+  --accent: var(--vert);
+
+  --rayon: 14px;
+  --ombre: 0 1px 2px rgb(22 33 28 / 8%), 0 8px 24px rgb(22 33 28 / 8%);
+  --marge: clamp(1rem, 4vw, 2rem);
+  --transition: 160ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #131b17;
+    --fond-carte: #1c2620;
+    --texte: #eef2ef;
+    --texte-doux: #9caaa2;
+    --bordure: #2c3a33;
+    --accent: var(--vert-clair);
+  }
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { line-height: 1.2; margin: 0 0 0.5em; font-weight: 650; }
+p { margin: 0 0 1em; }
+a { color: var(--accent); }
+
+.contenu {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  padding: var(--marge);
+}
+
+/* --- saisie du code ------------------------------------------------------ */
+.accueil {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100dvh;
+  text-align: center;
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.5rem;
+  color: var(--accent);
+}
+
+.accueil h1 { font-size: clamp(1.6rem, 6vw, 2.4rem); }
+
+.accueil .aide {
+  color: var(--texte-doux);
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.saisie {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+#code {
+  width: min(100%, 22rem);
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--fond-carte);
+  color: var(--texte);
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  font-size: clamp(1.6rem, 8vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-align: center;
+  text-indent: 0.35em; /* compense l'espacement sur le dernier caractere */
+  text-transform: uppercase;
+  transition: border-color var(--transition);
+}
+
+#code:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#code.erreur {
+  border-color: var(--rouge);
+  animation: secousse 320ms;
+}
+
+@keyframes secousse {
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #code.erreur { animation: none; }
+}
+
+/* --- boutons ------------------------------------------------------------- */
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid transparent;
+  border-radius: var(--rayon);
+  background: var(--accent);
+  color: var(--blanc);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.bouton:hover:not(:disabled) { background: var(--vert-profond); }
+.bouton:active:not(:disabled) { transform: scale(0.98); }
+.bouton:disabled { opacity: 0.45; cursor: default; }
+
+.bouton--fantome {
+  background: transparent;
+  border-color: var(--bordure);
+  color: var(--texte);
+}
+.bouton--fantome:hover:not(:disabled) { background: var(--fond-carte); }
+
+/* --- messages ------------------------------------------------------------ */
+.message {
+  min-height: 1.5em;
+  margin-top: 0.5rem;
+  color: var(--rouge);
+  font-size: 0.95rem;
+}
+
+.vide {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--texte-doux);
+}
+
+.vide h2 { color: var(--texte); font-size: 1.2rem; }
+
+.choix-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+/* --- en-tete de galerie -------------------------------------------------- */
+.entete {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 0.9rem var(--marge);
+  border-bottom: 1px solid var(--bordure);
+  background: color-mix(in srgb, var(--fond) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.entete h1 { margin: 0; font-size: 1.1rem; }
+.entete .code {
+  font-family: ui-monospace, Menlo, monospace;
+  letter-spacing: 0.12em;
+}
+.entete .compte { color: var(--texte-doux); font-size: 0.9rem; }
+.entete .actions { margin-left: auto; display: flex; gap: 0.5rem; }
+
+.entete .lien {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--bordure);
+  border-radius: 999px;
+  background: none;
+  color: var(--texte);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* --- grille -------------------------------------------------------------- */
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: var(--marge);
+  padding-bottom: 7rem;
+}
+
+.vignette {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  background: var(--sable-fonce);
+  overflow: hidden;
+}
+
+/* Deux boutons voisins plutot qu'un seul avec un test de zone au clic :
+   agrandir et selectionner sont deux gestes distincts, ils meritent deux
+   cibles distinctes -- pour le doigt comme pour le lecteur d'ecran. */
+.vignette .ouvrir {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.vignette img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 240ms ease, transform var(--transition);
+}
+
+.vignette img.chargee { opacity: 1; }
+.vignette:hover img { transform: scale(1.03); }
+
+.vignette .coche {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid var(--blanc);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 30%);
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.vignette .coche:active { transform: scale(0.9); }
+
+.vignette[data-choisie="true"] { outline: 3px solid var(--accent); outline-offset: -3px; }
+.vignette[data-choisie="true"] .coche {
+  background: var(--accent);
+  border-color: var(--blanc);
+}
+.vignette[data-choisie="true"] .coche::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: no-repeat center/16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
+
+/* --- barre d'achat ------------------------------------------------------- */
+.barre {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem var(--marge) calc(0.9rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--bordure);
+  background: color-mix(in srgb, var(--fond-carte) 94%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 24px rgb(22 33 28 / 10%);
+  transform: translateY(105%);
+  transition: transform 220ms ease;
+}
+
+.barre.visible { transform: none; }
+.barre .resume { font-weight: 600; }
+.barre .resume small { display: block; font-weight: 400; color: var(--texte-doux); }
+.barre .boutons { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* --- visionneuse --------------------------------------------------------- */
+/* Un dialog ferme est masque par le navigateur ; en fixant `display` sur
+   l'element on ecrase cette regle, et la visionneuse recouvre la grille en
+   permanence. D'ou le selecteur [open]. */
+.visionneuse:not([open]) { display: none; }
+
+.visionneuse[open] {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  border: none;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  background: #0b0f0d;
+}
+
+.visionneuse::backdrop { background: #0b0f0d; }
+
+.visionneuse img {
+  max-width: 100%;
+  max-height: 100dvh;
+  object-fit: contain;
+  touch-action: pan-y;
+}
+
+.visionneuse .fermer,
+.visionneuse .nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 12%);
+  color: var(--blanc);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.visionneuse .fermer { top: calc(12px + env(safe-area-inset-top)); right: 12px; }
+.visionneuse .nav.precedent { left: 12px; top: 50%; transform: translateY(-50%); }
+.visionneuse .nav.suivant { right: 12px; top: 50%; transform: translateY(-50%); }
+.visionneuse .nav:disabled { opacity: 0.25; cursor: default; }
+
+.visionneuse .pied {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem calc(1rem + env(safe-area-inset-left));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgb(0 0 0 / 65%));
+  color: var(--blanc);
+}
+
+.visionneuse .position { font-variant-numeric: tabular-nums; }
+
+/* --- divers -------------------------------------------------------------- */
+.chargement {
+  display: grid;
+  place-items: center;
+  min-height: 50dvh;
+  color: var(--texte-doux);
+}
+
+.pied-page {
+  padding: 2rem var(--marge) 6rem;
+  color: var(--texte-doux);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- page de remerciement ------------------------------------------------ */
+.merci { padding-block: 3rem 1rem; text-align: center; }
+.merci h1 { font-size: clamp(1.5rem, 6vw, 2.1rem); }
+.merci .aide { color: var(--texte-doux); max-width: 34rem; margin-inline: auto; }
+
+.fichiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fichiers .bouton { min-width: min(100%, 22rem); }
+
+/* --- console d'administration -------------------------------------------- */
+.entete-admin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.entete-admin h1 { margin: 0; font-size: 1.15rem; }
+.entete-admin .lien { margin-left: auto; }
+.entete-admin input[type="date"] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: var(--fond-carte);
+  color: var(--texte);
+  font: inherit;
+}
+
+.cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.carte {
+  padding: 1rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--fond-carte);
+}
+.carte strong { display: block; font-size: 1.6rem; line-height: 1.1; }
+.carte span { color: var(--texte-doux); font-size: 0.85rem; }
+
+.indice {
+  color: var(--texte-doux);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.tableau-defilant { overflow-x: auto; margin-bottom: 2rem; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+th, td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--bordure);
+  text-align: left;
+  white-space: nowrap;
+}
+th { color: var(--texte-doux); font-weight: 600; }
+caption.vide-tableau {
+  padding: 1.5rem;
+  color: var(--texte-doux);
+  text-align: left;
+  caption-side: bottom;
+}

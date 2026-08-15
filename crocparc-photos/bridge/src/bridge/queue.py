@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
 import sqlite3
 import threading
 import uuid
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS files (
   thumb_key       TEXT,
   original_path    TEXT,
   sha1            TEXT,
+  declared        INTEGER NOT NULL DEFAULT 0,
   attempts        INTEGER NOT NULL DEFAULT 0,
   next_attempt_at REAL NOT NULL DEFAULT 0,
   last_error      TEXT,
@@ -63,6 +65,11 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_code_date
   ON sessions(code, session_date);
+
+CREATE TABLE IF NOT EXISTS meta (
+  cle    TEXT PRIMARY KEY,
+  valeur TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS events (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,6 +125,29 @@ class Queue:
         with self._write_lock:
             self.conn.executescript(SCHEMA)
             self.conn.commit()
+        self.key_salt()
+
+    def key_salt(self) -> str:
+        """Sel des cles de stockage, tire une fois pour toutes.
+
+        Les cles R2 doivent etre indevinables : le bucket des previews est
+        public, et une cle derivee de la date et du code s'enumere. Le sel rend
+        la derivation opaque tout en restant deterministe, ce qui garde le
+        rejeu idempotent. Il vit dans bridge.db -- a sauvegarder avec le reste.
+        """
+        with self._write_lock:
+            ligne = self.conn.execute(
+                "SELECT valeur FROM meta WHERE cle = 'key_salt'"
+            ).fetchone()
+            if ligne is not None:
+                return ligne["valeur"]
+            sel = secrets.token_hex(32)
+            self.conn.execute(
+                "INSERT INTO meta (cle, valeur) VALUES ('key_salt', ?)", (sel,)
+            )
+            self.conn.commit()
+        log.info("sel des cles de stockage cree")
+        return sel
 
     def close(self) -> None:
         connection = getattr(self._local, "conn", None)
@@ -150,8 +180,10 @@ class Queue:
                 )
                 self.conn.commit()
                 return True
-            # Le FTP a reecrit un fichier deja traite (meme nom, contenu different).
-            if row["state"] == FileState.DONE and row["size"] != size:
+            # Le FTP a reecrit un fichier deja traite, ou la photographe a
+            # renvoye un fichier reste en quarantaine : dans les deux cas il
+            # doit repartir dans la file, sans intervention sur le mini-PC.
+            if row["state"] in (FileState.DONE, FileState.FAILED) and row["size"] != size:
                 self.conn.execute(
                     """
                     UPDATE files

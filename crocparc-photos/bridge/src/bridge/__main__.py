@@ -21,6 +21,7 @@ from pathlib import Path
 from .config import Config, ConfigError
 from .fetch_original import FetchServer
 from .health import AlreadyRunning, HealthServer, snapshot
+from .lockfile import AlreadyLocked, InstanceLock
 from .logging_setup import setup_logging
 from .models import FileState
 from .processor import Processor
@@ -40,6 +41,15 @@ def build(config: Config) -> tuple[Queue, Processor]:
 
 
 def cmd_run(config: Config) -> int:
+    # Le verrou avant tout le reste : deux ponts sur le meme dossier
+    # traiteraient chaque photo deux fois.
+    verrou = InstanceLock(config.data_dir / "bridge.lock")
+    try:
+        verrou.acquire()
+    except AlreadyLocked as exc:
+        print(f"Demarrage refuse : {exc}", file=sys.stderr)
+        return 3
+
     queue, processor = build(config)
     health = HealthServer(config, queue)
     try:
@@ -47,6 +57,7 @@ def cmd_run(config: Config) -> int:
     except AlreadyRunning as exc:
         print(f"Demarrage refuse : {exc}", file=sys.stderr)
         queue.close()
+        verrou.release()
         return 3
     observer = start_observer(config, queue)
 
@@ -80,14 +91,22 @@ def cmd_run(config: Config) -> int:
 
     try:
         while not stop.is_set():
-            now = time.time()
-            if now - last_scan >= config.rescan_interval:
-                scan_inbox(config, queue)
-                last_scan = now
-            processor.tick(now=now)
-            if now - last_purge >= config.purge_interval:
-                processor.purge_inbox(now=now)
-                last_purge = now
+            # Rien, dans un tour de boucle, ne doit pouvoir arreter le pont :
+            # un partage reseau qui disparait, un fichier verrouille par
+            # l'antivirus ou une base momentanement occupee sont des incidents
+            # ordinaires, pas des raisons de cesser de travailler.
+            try:
+                now = time.time()
+                if now - last_scan >= config.rescan_interval:
+                    scan_inbox(config, queue)
+                    last_scan = now
+                processor.tick(now=now)
+                if now - last_purge >= config.purge_interval:
+                    processor.purge_inbox(now=now)
+                    last_purge = now
+            except Exception:  # noqa: BLE001 - la boucle survit a tout
+                log.exception("erreur dans la boucle principale, on continue")
+                stop.wait(min(5.0, config.poll_interval * 5))
             stop.wait(config.poll_interval)
     finally:
         observer.stop()
@@ -96,6 +115,7 @@ def cmd_run(config: Config) -> int:
             fetch.stop()
         health.stop()
         queue.close()
+        verrou.release()
         log.info("pont arrete")
     return 0
 

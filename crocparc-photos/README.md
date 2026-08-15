@@ -3,33 +3,43 @@
 Chaine de vente des photos de visite : Sony A7 IV -> FTP -> tri automatique par
 carte QR -> stockage -> galerie web -> paiement.
 
-Ce depot est construit par phases. **Les phases A et B sont livrees** : le pont
-local trie et fabrique les previews, les depose sur R2 et declare les sessions
-dans D1. Rien de tout cela n'exige de compte cloud pour etre teste.
+**La chaine est complete** : la photographe photographie une carte, puis le
+groupe ; les photos partent en FTP, le pont les trie, fabrique les previews
+filigranees, les depose sur R2 et declare la session dans D1 ; le visiteur saisit
+son code, choisit ses photos, paie, et telecharge ses originaux. Rien n'exige de
+compte cloud pour etre teste en local.
 
 | Phase | Contenu | Etat |
 |---|---|---|
 | A | Pont local : surveillance FTP, cartes QR, previews filigranees, file SQLite | **livree** |
 | B | R2 + D1 + `POST /api/ingest` + `POST /fetch-original` | **livree** |
-| C | Galerie PWA | a venir |
-| D | Stripe Checkout et telechargements | a venir |
-| E | Admin, purge a 30 jours, webhook Make, planches de cartes | a venir |
+| C | Galerie PWA : saisie du code, grille, visionneuse, selection | **livree** |
+| D | Stripe Checkout, webhook, page de retour, telechargements | **livree** |
+| E | Console d'admin, purge a 30 jours, webhook Make, planches de cartes | **livree** |
 
 ```
 crocparc-photos/
-├── bridge/                  # service Python installe sur le mini-PC du parc
-│   ├── src/bridge/          # config, watcher, qr, imaging, queue, uploader,
-│   │                        # processor, signing, fetch_original, health
-│   ├── tests/               # pytest ; les JPEG de test sont generes par les tests
-│   └── .env.example         # toutes les variables, commentees
-├── functions/               # Cloudflare Pages Functions (TypeScript)
-│   ├── _lib/signing.ts      # HMAC partage avec le pont
-│   ├── api/ingest.ts        # POST /api/ingest
-│   └── __tests__/           # vitest, sur le SQL reel des migrations
-├── db/migrations/           # schema D1
-├── web/                     # front statique (phase C)
+├── bridge/                     # service Python installe sur le mini-PC du parc
+│   ├── src/bridge/             # config, watcher, qr, imaging, queue, uploader,
+│   │                           # processor, signing, fetch_original, health
+│   ├── tests/                  # pytest ; les JPEG de test sont generes par les tests
+│   └── .env.example            # toutes les variables, commentees
+├── functions/                  # Cloudflare Pages Functions (TypeScript)
+│   ├── _lib/                   # signature HMAC, tarifs, Stripe, Make, admin
+│   ├── api/ingest.ts           # le pont declare une session
+│   ├── api/gallery/[code].ts   # la galerie d'un visiteur
+│   ├── api/checkout.ts         # creation du paiement
+│   ├── api/webhook/stripe.ts   # confirmation du paiement
+│   ├── api/download/[token].ts # telechargement des originaux
+│   ├── api/admin/overview.ts   # tableau de bord
+│   ├── g/[code].ts             # sert la galerie sur l'URL du QR
+│   └── __tests__/              # vitest, sur le SQL reel des migrations
+├── workers/purge/              # Worker planifie : efface tout a 30 jours
+├── db/migrations/              # schema D1
+├── web/                        # PWA : saisie, galerie, remerciement, console
 └── tools/
-    └── simulate-drop.py     # fabrique une fausse matinee de prise de vue
+    ├── simulate-drop.py        # fabrique une fausse matinee de prise de vue
+    └── generate-cards.py       # planches de cartes QR imprimables (PDF + CSV)
 ```
 
 ## Ou vivent les fichiers
@@ -268,6 +278,40 @@ BRIDGE_SHARED_SECRET=un-secret-de-developpement-de-32-caracteres \
 python -m bridge once
 ```
 
+### Le Worker de purge
+
+Ce que la page d'accueil promet -- « vos photos sont effacees au bout de
+30 jours » -- n'est vrai que parce qu'un Worker planifie l'execute. Il est
+separe des Functions, car Cloudflare Pages ne declenche pas de taches planifiees.
+
+```bash
+npm run purge:deploy          # deploie le Worker et son declencheur quotidien
+npm run purge:test            # le declenche a la main, en local
+```
+
+Il tourne tous les jours a 03h00 UTC, soit 07h00 a La Reunion. Il efface les
+objets R2 **avant** les lignes en base : si le Worker s'arrete au milieu, il
+reste des lignes pointant vers des objets disparus (galerie vide, sans danger)
+plutot que des photos d'enfants publiques dont plus rien ne garde la trace.
+
+### La console d'administration
+
+`/admin.html`, protegee par `ADMIN_TOKEN`. Elle montre les visites du jour, les
+**photos sans carte** (le seul endroit ou l'on s'apercoit qu'un QR n'a pas ete
+lu), les ventes et les recettes. Le jeton reste en memoire d'onglet et
+disparait a la fermeture.
+
+### Les cartes a imprimer
+
+```bash
+python3 tools/generate-cards.py --nombre 300 --sortie cartes/
+```
+
+Produit un PDF de planches A4 (8 cartes par page, decoupe a 90 x 65 mm) et un
+CSV `code,card_number`. Relancer la commande complete l'inventaire sans jamais
+reutiliser un code deja tire. Les codes sont tires avec `secrets`, pas avec
+`random` : ils sont la seule chose qui protege une galerie.
+
 ### Exposer `/fetch-original`
 
 Le webhook Stripe doit pouvoir joindre le mini-PC pour reclamer un original
@@ -298,6 +342,38 @@ il evite seulement d'exposer la machine.
 - Les deux implementations de la signature sont verrouillees par un vecteur de
   test commun, present dans `bridge/tests/test_signing.py` et
   `functions/__tests__/signing.test.ts`. Si l'une devie, un des deux tests tombe.
+
+## Le parcours du visiteur
+
+1. Il scanne le QR de sa carte, ou saisit son code sur `photos.crocparc.re`.
+   Le QR mene a `/g/K7M2QP` : l'URL reste lisible et partageable.
+2. La galerie affiche ses vignettes filigranees. Il agrandit, il selectionne.
+3. Il paie par Stripe Checkout. **Le prix est toujours recalcule cote serveur**
+   a partir des photos reellement en base : un navigateur bricole ne peut pas
+   se faire un tarif.
+4. Stripe confirme, le webhook passe la commande en `paid`, cree le jeton de
+   telechargement, puis **reclame les originaux au pont**.
+5. La page de retour propose les fichiers. Le meme lien part par courriel via
+   Make.
+
+Quelques garde-fous qui meritent d'etre connus :
+
+- **Une carte ayant servi a deux visites** ne montre jamais la mauvaise. Les
+  cartes sont physiques et repassent en circulation : tant que la premiere
+  galerie n'a pas expire, deux visites du meme code cohabitent. Dans ce cas le
+  site demande la date de visite au lieu de choisir -- servir « la plus
+  recente » reviendrait a montrer les enfants d'inconnus a la premiere famille.
+  Consequence pratique : **imprimez de quoi tenir plus de 30 jours de rotation.**
+- **Les cles R2 des previews sont derivees d'un sel local**, pas du code ni du
+  nom de fichier du boitier. Le bucket etant public, une cle du type
+  `2026-10-15/K7M2QP/DSC01234_p.jpg` serait devinable -- et pour la session
+  ORPHAN, dont le code est connu, enumerable sans meme avoir de carte.
+- **Le forfait ne peut jamais couter plus cher que les photos a l'unite** : si
+  la selection depasse le prix du pack, le pack est applique et le visiteur
+  repart avec toute sa visite.
+- **Le paiement survit a une panne du pont.** Si le mini-PC est eteint au moment
+  de l'achat, la commande reste valide : le telechargement reclame les
+  originaux a la demande, et le lien reste bon 30 jours.
 
 ## Rejouer le critere d'acceptation de la phase A
 
@@ -337,7 +413,8 @@ evenement `gps_removed` dans `python -m bridge status`.)
 
 ```bash
 cd bridge && python -m pytest -q     # le pont
-npm test                             # les Functions
+npm test                             # Functions et Worker de purge
+npm run typecheck                    # TypeScript
 ```
 
 Aucun binaire n'est versionne : chaque test fabrique ses propres JPEG, cartes QR
@@ -351,13 +428,33 @@ Cote Functions, les tests s'executent contre le **SQL reel des migrations**,
 adosse au SQLite natif de Node : idempotence de `/api/ingest`, refus des
 signatures et des horodatages invalides, validation des codes et des chemins.
 
-La verification finale se fait sur le vrai moteur Cloudflare :
+Ce que couvrent les tests des Functions : idempotence de `/api/ingest`, refus
+des signatures et horodatages invalides, **absence d'oracle** sur la galerie (un
+code inconnu, expire, orphelin ou mal forme rendent la meme reponse), la carte
+ayant servi a deux visites, le prix recalcule cote serveur, l'idempotence du
+webhook Stripe, la revocation des liens a 30 jours et l'acces a la console.
+
+La verification finale se fait sur le vrai moteur Cloudflare, et dans un vrai
+navigateur :
 
 ```bash
-npx wrangler pages dev --port 8976    # d'un cote
-cd bridge && ... python -m bridge once # de l'autre (voir plus haut)
-npx wrangler d1 execute crocparc-photos --local --command "SELECT * FROM sessions"
+npx wrangler d1 migrations apply crocparc-photos --local
+echo "BRIDGE_SHARED_SECRET=un-secret-de-developpement-de-32-caracteres" > .dev.vars
+npx wrangler pages dev --port 8976 --binding PREVIEWS_BASE_URL=http://127.0.0.1:8977
+
+# dans un second terminal : servir les previews fabriquees par le pont
+cd bridge/data/out/crocparc-previews && python3 -m http.server 8977
+
+# dans un troisieme : faire tourner la chaine
+python3 tools/simulate-drop.py --inbox bridge/data/inbox --groupes 1 --photos 7
+cd bridge && WATCH_DIR=./data/inbox BRIDGE_REGISTRAR_BACKEND=api \
+  BRIDGE_INGEST_URL=http://localhost:8976/api/ingest \
+  BRIDGE_SHARED_SECRET=un-secret-de-developpement-de-32-caracteres \
+  python -m bridge once
 ```
+
+Puis ouvrir `http://localhost:8976/g/<CODE>` : la galerie doit afficher les
+vignettes filigranees.
 
 ## Choix a connaitre
 

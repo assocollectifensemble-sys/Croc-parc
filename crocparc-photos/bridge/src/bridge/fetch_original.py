@@ -79,7 +79,12 @@ def push_originals(
     resultat: dict[str, dict] = {}
     for relatif in chemins:
         source = resolve_original(config.originals_dir, relatif)
-        cle = f"originals/{relatif}"
+        # La cle vient du chemin normalise, pas de la chaine recue : sinon
+        # `a/./b.jpg`, `a//b.jpg` et `a\\b.jpg` designent le meme fichier et
+        # produisent trois objets R2 differents, donc trois fois l'egress.
+        cle = "originals/" + "/".join(
+            PurePosixPath(relatif.replace("\\", "/")).parts
+        )
         if not storage.exists(config.originals_bucket, cle):
             try:
                 storage.put(source, config.originals_bucket, cle)
@@ -104,6 +109,10 @@ class FetchServer:
 
         class Handler(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"
+            # Sans delai, une connexion ouverte et muette immobilise un thread
+            # pour toujours -- et la signature n'est verifiee qu'apres lecture
+            # du corps, donc n'importe qui peut en ouvrir autant qu'il veut.
+            timeout = 15
 
             def _repondre(self, status: int, payload: dict) -> None:
                 body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -149,6 +158,12 @@ class FetchServer:
                 except FetchError as exc:
                     log.warning("demande refusee", extra={"raison": str(exc), "status": exc.status})
                     self._repondre(exc.status, {"error": str(exc)})
+                except Exception as exc:  # noqa: BLE001 - toujours repondre
+                    # Un corps JSON valide mais inattendu (une liste, une chaine)
+                    # ne doit pas couper la connexion sans reponse : l'appelant
+                    # attendrait jusqu'a son propre delai.
+                    log.exception("erreur inattendue", extra={"error": str(exc)})
+                    self._repondre(400, {"error": "demande invalide"})
                 else:
                     self._repondre(200, {"originals": resultat})
 

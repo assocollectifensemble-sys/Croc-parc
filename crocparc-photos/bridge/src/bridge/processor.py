@@ -9,6 +9,8 @@ comptees et rejouees avec un backoff exponentiel plafonne.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import time
 from datetime import datetime, timedelta
@@ -16,6 +18,7 @@ from pathlib import Path
 
 from .config import Config
 from .imaging import (
+    ImageError,
     copy_verified,
     sha1_of,
     make_preview,
@@ -48,6 +51,26 @@ class Processor:
         self.storage = storage
         self.registrar = registrar
         self.inventory = load_inventory(config.cards_inventory_csv)
+        self.key_salt = queue.key_salt()
+
+    def _object_key(self, session: SessionRow, filename: str, suffixe: str) -> str:
+        """Cle de stockage d'un derive : indevinable, mais stable au rejeu.
+
+        Le bucket des previews est public. Une cle du type
+        `2026-10-15/K7M2QP/DSC01234_p.jpg` se devine des qu'on connait la date
+        et le code -- et pour la session ORPHAN, dont le code est public, elle
+        s'enumere en quelques minutes, sans carte et hors de portee de la
+        limitation de debit. On derive donc la cle d'un sel local.
+
+        La date reste en clair : elle ne revele rien qu'un attaquant ne puisse
+        deviner, et elle rend la purge a 30 jours triviale.
+        """
+        empreinte = hmac.new(
+            self.key_salt.encode("ascii"),
+            f"{session.session_date}/{session.code}/{filename}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()[:32]
+        return f"{session.session_date}/{empreinte}{suffixe}"
 
     # -- boucle -------------------------------------------------------------
     def tick(self, now: float | None = None) -> int:
@@ -135,7 +158,13 @@ class Processor:
             return True
 
         if size == 0:
-            self.queue.update(row.path, size=size, last_size=size, stable_since=now)
+            # Un fichier vide qui le reste n'est pas un transfert en cours mais
+            # un incident : sans ce garde-fou il resterait en file pour toujours,
+            # a reecrire la base a chaque tour.
+            if row.stable_since is not None and now - row.stable_since > self.config.max_backoff:
+                raise ImageError(f"fichier vide depuis trop longtemps : {row.filename}")
+            if row.stable_since is None:
+                self.queue.update(row.path, size=size, last_size=size, stable_since=now)
             return False
 
         if row.last_size == size and row.stable_since is not None:
@@ -206,12 +235,11 @@ class Processor:
         assert row.shot_at
         session = self._session_for(row)
         filename = self._free_filename(session.id, row)
-        stem = Path(filename).stem
-        prefix = f"{session.session_date}/{session.code}"
-
-        preview_key = f"{prefix}/{stem}_p.jpg"
-        thumb_key = f"{prefix}/{stem}_t.jpg"
-        original_path = f"{prefix}/{filename}"  # relatif a ORIGINALS_DIR, en slashs
+        preview_key = self._object_key(session, filename, "_p.jpg")
+        thumb_key = self._object_key(session, filename, "_t.jpg")
+        # L'archive locale, elle, reste lisible par un humain : elle ne sort
+        # jamais du parc et la photographe doit pouvoir s'y retrouver.
+        original_path = f"{session.session_date}/{session.code}/{filename}"
 
         with open_oriented(row.path) as image:
             width, height = make_preview(
@@ -314,6 +342,13 @@ class Processor:
             session = self.queue.session(session_id)
             if session is None:  # pragma: no cover - incoherence de base
                 continue
+            # On marque « declaree » AVANT l'appel : si la reponse se perd alors
+            # que la base distante a bien ecrit, la photo ne doit plus jamais
+            # etre rerangee ailleurs, sinon elle existerait en double, dans deux
+            # sessions differentes. Le rejeu, lui, reste sans risque : l'API est
+            # idempotente.
+            for row in photos:
+                self.queue.update(row.path, declared=1)
             try:
                 self.registrar.register(session, photos)
             except Exception as exc:  # noqa: BLE001 - le reseau tombe, on rejouera
@@ -451,7 +486,17 @@ class Processor:
                     row.path,
                 )
                 continue
-            row.path.unlink()
+            try:
+                row.path.unlink()
+            except OSError as exc:
+                # Sous Windows, FileZilla ou l'antivirus peuvent tenir un
+                # handle sur le fichier. Ce n'est pas un incident : on
+                # reessaiera au prochain passage.
+                log.info(
+                    "fichier encore verrouille, purge reportee",
+                    extra={"file": row.filename, "error": str(exc)},
+                )
+                continue
             efface += 1
         if efface:
             log.info(
@@ -461,6 +506,19 @@ class Processor:
             self.queue.record_event("purge", f"{efface} fichier(s) efface(s) de l'inbox")
         return efface
 
+    def _oublier_derives(self, row: FileRow) -> None:
+        """Retire du stockage les previews d'une photo qui change de session."""
+        for cle in (row.preview_key, row.thumb_key):
+            if not cle:
+                continue
+            try:
+                self.storage.delete(self.config.previews_bucket, cle)
+            except Exception as exc:  # noqa: BLE001 - le menage ne doit rien casser
+                log.warning(
+                    "preview non supprimee apres rerangement",
+                    extra={"key": cle, "error": str(exc)},
+                )
+
     def _reassign_after_card(self, session: SessionRow, card_shot_at: str) -> None:
         """Rattrape les photos rangees trop tot quand la carte arrive en retard.
 
@@ -468,7 +526,11 @@ class Processor:
         apres coupure peut inverser deux fichiers.
         """
         for row in self.queue.photos_to_reassign(card_shot_at, session.id):
-            if row.state in REASSIGNABLE:
+            if row.state in REASSIGNABLE and not row.declared:
+                # Les derives deja deposes portent la cle de l'ancienne session :
+                # laisses en place, ils resteraient lisibles publiquement a une
+                # adresse que plus personne ne controle.
+                self._oublier_derives(row)
                 self.queue.update(
                     row.path,
                     state=FileState.ANALYZED,

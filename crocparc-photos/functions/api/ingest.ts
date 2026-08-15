@@ -9,7 +9,7 @@
  */
 
 import { SIGNATURE_HEADER, SignatureError, TIMESTAMP_HEADER, verify } from "../_lib/signing"
-import { type Env, type IngestPayload, type IngestPhoto, isValidCode, json } from "../_lib/types"
+import { type Env, type IngestPayload, type IngestPhoto, isIngestCode, json } from "../_lib/types"
 
 const MAX_BODY_BYTES = 1024 * 1024
 const MAX_PHOTOS = 500
@@ -46,7 +46,7 @@ function parsePayload(brut: unknown): IngestPayload {
   const charge = brut as Record<string, unknown>
 
   const code = charge.code
-  if (!isValidCode(code)) throw new InvalidPayload("code de carte invalide")
+  if (!isIngestCode(code)) throw new InvalidPayload("code de carte invalide")
 
   const sessionDate = requireString(charge.session_date, "session_date", 10)
   if (!DATE_PATTERN.test(sessionDate) || Number.isNaN(Date.parse(sessionDate))) {

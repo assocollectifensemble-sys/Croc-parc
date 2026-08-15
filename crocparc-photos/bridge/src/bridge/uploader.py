@@ -43,6 +43,8 @@ class Storage(Protocol):
 
     def exists(self, bucket: str, key: str) -> bool: ...
 
+    def delete(self, bucket: str, key: str) -> None: ...
+
 
 class Registrar(Protocol):
     def register(self, session: SessionRow, photos: list[FileRow]) -> None: ...
@@ -68,6 +70,9 @@ class LocalStorage:
 
     def exists(self, bucket: str, key: str) -> bool:
         return self._target(bucket, key).is_file()
+
+    def delete(self, bucket: str, key: str) -> None:
+        self._target(bucket, key).unlink(missing_ok=True)
 
 
 class R2Storage:
@@ -119,6 +124,12 @@ class R2Storage:
             return True
         except Exception:
             return False
+
+    def delete(self, bucket: str, key: str) -> None:
+        try:
+            self.client.delete_object(Bucket=bucket, Key=key)
+        except Exception as exc:
+            raise StorageError(f"suppression R2 impossible ({bucket}/{key}) : {exc}") from exc
 
 
 class NullRegistrar:

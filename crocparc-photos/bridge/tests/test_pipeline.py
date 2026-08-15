@@ -106,11 +106,12 @@ def test_trente_jpeg_trois_cartes_trois_sessions(config, queue, processor):
 
     for code in CODES:
         for photo in depose[code]:
-            base = photo.stem
-            assert f"{JOUR}/{code}/{base}_p.jpg" in previews
-            assert f"{JOUR}/{code}/{base}_t.jpg" in previews
+            ligne = queue.get(photo)
+            assert ligne.preview_key in previews
+            assert ligne.thumb_key in previews
+            # L'archive locale reste lisible par un humain, la cle publique non.
             assert f"{JOUR}/{code}/{photo.name}" in stockes
-            assert queue.get(photo).original_path == f"{JOUR}/{code}/{photo.name}"
+            assert ligne.original_path == f"{JOUR}/{code}/{photo.name}"
 
 
 def test_les_photos_de_cartes_ne_sont_jamais_publiees(config, queue, processor):
@@ -136,8 +137,9 @@ def test_previews_filigranees_et_dimensionnees(config, queue, processor):
     run(processor, config, queue)
 
     source = depose[CODES[0]][0]
-    preview = config.output_dir / config.previews_bucket / f"{JOUR}/{CODES[0]}/{source.stem}_p.jpg"
-    thumb = config.output_dir / config.previews_bucket / f"{JOUR}/{CODES[0]}/{source.stem}_t.jpg"
+    ligne = queue.get(source)
+    preview = config.output_dir / config.previews_bucket / ligne.preview_key
+    thumb = config.output_dir / config.previews_bucket / ligne.thumb_key
 
     with Image.open(preview) as image:
         assert max(image.size) == 2048
@@ -474,3 +476,50 @@ def test_original_archive_nettoye_de_ses_coordonnees_gps(config, queue, processo
     assert queue.get(source).sha1 == sha1_of(archive)
     assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 2
     assert not source.exists()
+
+
+def test_cles_publiques_indevinables_et_stables(config, queue, processor):
+    """Le bucket des previews est public : ses cles ne doivent rien reveler.
+
+    Une cle du type `2026-10-15/K7M2QP/DSC01234_p.jpg` se devine des qu'on
+    connait la date et le code. Pour la session ORPHAN, dont le code est
+    documente, elle s'enumere meme sans carte -- et hors de portee de toute
+    limitation de debit, puisque le bucket repond directement.
+    """
+    depose = deposer_journee(config.watch_dir)
+    run(processor, config, queue)
+
+    for code in CODES:
+        for photo in depose[code]:
+            ligne = queue.get(photo)
+            for cle in (ligne.preview_key, ligne.thumb_key):
+                assert cle.startswith(f"{JOUR}/")  # la date reste utile a la purge
+                assert code not in cle
+                assert photo.stem not in cle
+                assert len(cle.split("/")[-1].split("_")[0]) == 32
+
+    # Deterministe : rejouer ne cree pas une deuxieme copie sous une autre cle.
+    avant = {p: queue.get(p).preview_key for p in depose[CODES[0]]}
+    run(processor, config, queue, now=T0 + 120)
+    assert {p: queue.get(p).preview_key for p in depose[CODES[0]]} == avant
+    assert len(cles(config, config.previews_bucket)) == 54
+
+
+def test_photo_declaree_n_est_plus_rerangee(config, queue, processor):
+    """Une reponse perdue ne doit pas faire exister la photo dans deux sessions.
+
+    Si /api/ingest a bien ecrit mais que la reponse s'est perdue, la ligne reste
+    en `uploaded`. Sans le drapeau `declared`, une carte arrivee en retard la
+    rerangerait ailleurs : la photo existerait deux fois en base, dont une dans
+    la session orpheline, preview publique comprise.
+    """
+    photo = make_photo(config.watch_dir / "DSC00003.JPG", datetime(2026, 10, 15, 11, 5), seed=3)
+    run(processor, config, queue)  # aucune carte : session orpheline
+    orpheline = queue.get(photo).session_id
+    assert queue.get(photo).declared is True
+
+    make_card(config.watch_dir / "DSC00002.JPG", "K7M2QP", datetime(2026, 10, 15, 11, 0))
+    run(processor, config, queue, now=T0 + 100)
+
+    assert queue.get(photo).session_id == orpheline  # rien n'a bouge
+    assert any(e["kind"] == "reassign_conflict" for e in queue.events())

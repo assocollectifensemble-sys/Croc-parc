@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Vos photos - Croc Parc</title>
+    <meta name="theme-color" content="#2f6b4f" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icons/icone.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <header class="entete" hidden id="entete">
+      <h1>Visite du <span id="date-visite"></span></h1>
+      <span class="code" id="code-affiche"></span>
+      <span class="compte" id="compte"></span>
+      <div class="actions">
+        <button class="lien" id="tout-selectionner" type="button">Tout selectionner</button>
+      </div>
+    </header>
+
+    <main id="principal">
+      <p class="chargement" id="chargement">Chargement de vos photos…</p>
+    </main>
+
+    <div class="grille" id="grille" hidden></div>
+
+    <p class="pied-page" id="pied" hidden>
+      Ces photos restent disponibles jusqu'au <span id="expiration"></span>.<br />
+      Une question&nbsp;? <a href="mailto:photos@crocparc.re">photos@crocparc.re</a>
+    </p>
+
+    <div class="barre" id="barre" role="region" aria-label="Votre selection">
+      <div class="resume">
+        <span id="resume-nombre">0 photo</span>
+        <small id="resume-prix"></small>
+      </div>
+      <div class="boutons">
+        <button class="bouton bouton--fantome" id="acheter-selection" type="button">
+          Acheter la selection
+        </button>
+        <button class="bouton" id="acheter-tout" type="button">Tout prendre</button>
+      </div>
+    </div>
+
+    <dialog class="visionneuse" id="visionneuse">
+      <button class="fermer" id="fermer" type="button" aria-label="Fermer">&times;</button>
+      <button class="nav precedent" id="precedent" type="button" aria-label="Photo precedente">&#8249;</button>
+      <img id="grande-photo" alt="" />
+      <button class="nav suivant" id="suivant" type="button" aria-label="Photo suivante">&#8250;</button>
+      <div class="pied">
+        <span class="position" id="position"></span>
+        <button class="bouton" id="basculer-selection" type="button">Selectionner</button>
+      </div>
+    </dialog>
+
+    <script type="module" src="/js/gallery.js"></script>
+  </body>
+</html>

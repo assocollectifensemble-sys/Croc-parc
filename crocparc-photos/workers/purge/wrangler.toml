@@ -1,0 +1,21 @@
+name = "crocparc-purge"
+main = "index.ts"
+compatibility_date = "2024-09-23"
+
+# Tous les jours a 03h00 UTC, soit 07h00 a La Reunion : le parc dort, la purge
+# ne concurrence personne.
+[triggers]
+crons = ["0 3 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "crocparc-photos"
+database_id = "a-remplacer-apres-wrangler-d1-create"
+
+[[r2_buckets]]
+binding = "PREVIEWS"
+bucket_name = "crocparc-previews"
+
+[[r2_buckets]]
+binding = "ORIGINALS"
+bucket_name = "crocparc-originals"

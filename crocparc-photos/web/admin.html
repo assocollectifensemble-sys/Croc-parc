@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Console - Croc Parc Photos</title>
+    <meta name="theme-color" content="#2f6b4f" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/icons/icone.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <main class="contenu">
+      <form class="saisie" id="connexion">
+        <h1>Console</h1>
+        <label class="sr-only" for="jeton">Jeton d'acces</label>
+        <input id="jeton" type="password" placeholder="Jeton d'acces" autocomplete="current-password" />
+        <p class="message" id="message-connexion" role="status" aria-live="polite"></p>
+        <button class="bouton" type="submit">Entrer</button>
+      </form>
+
+      <section id="tableau" hidden>
+        <div class="entete-admin">
+          <h1>Journee du <input type="date" id="jour" /></h1>
+          <button class="lien" id="rafraichir" type="button">Rafraichir</button>
+          <button class="lien" id="deconnexion" type="button">Quitter</button>
+        </div>
+
+        <div class="cartes" id="totaux"></div>
+
+        <h2>Visites du jour</h2>
+        <div class="tableau-defilant"><table id="sessions"></table></div>
+
+        <h2>Photos sans carte <span class="indice">a surveiller</span></h2>
+        <p class="aide" id="aide-orphelines">
+          Ces photos sont arrivees avant qu'une carte ne soit photographiee, ou
+          apres un QR illisible. Elles ne sont visibles par personne.
+        </p>
+        <div class="tableau-defilant"><table id="orphelines"></table></div>
+
+        <h2>Ventes</h2>
+        <div class="tableau-defilant"><table id="ventes"></table></div>
+      </section>
+    </main>
+
+    <script type="module" src="/js/admin.js"></script>
+  </body>
+</html>
