@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from PIL import ExifTags, Image
 
+from bridge.models import Watermark
 from bridge.imaging import (
     ImageError,
     apply_watermark,
@@ -66,8 +67,7 @@ def test_preview_bord_long_et_sans_exif(tmp_path, config):
             destination,
             config.preview_max_edge,
             config.preview_quality,
-            config.watermark_text,
-            config.watermark_opacity,
+            config.watermark,
         )
     assert size == (2048, 1365)
     with Image.open(destination) as preview:
@@ -86,8 +86,7 @@ def test_vignette_bord_long(tmp_path, config):
             destination,
             config.thumb_max_edge,
             config.thumb_quality,
-            config.watermark_text,
-            config.watermark_opacity,
+            config.watermark,
         ) == (512, 341)
 
 
@@ -95,7 +94,7 @@ def test_pas_d_agrandissement(tmp_path, config):
     source = make_photo(tmp_path / "DSC01240.JPG", size=(1200, 800), seed=6)
     with open_oriented(source) as image:
         size = make_preview(
-            image, tmp_path / "out" / "p.jpg", 2048, 82, config.watermark_text, 0.28
+            image, tmp_path / "out" / "p.jpg", 2048, 82, config.watermark
         )
     assert size == (1200, 800)
 
@@ -104,7 +103,7 @@ def test_filigrane_modifie_l_image(tmp_path):
     source = make_photo(tmp_path / "DSC01241.JPG", size=(1200, 800), seed=7)
     with open_oriented(source) as image:
         plain = image.convert("RGB")
-        stamped = apply_watermark(plain, "CROC PARC", 0.28)
+        stamped = apply_watermark(plain, Watermark("CROC PARC", 0.65))
     assert stamped.size == plain.size
     left, right = plain.tobytes(), stamped.tobytes()
     changed = sum(1 for a, b in zip(left, right) if a != b)
@@ -116,7 +115,7 @@ def test_filigrane_vide_ne_fait_rien(tmp_path):
     source = make_photo(tmp_path / "DSC01242.JPG", size=(400, 300), seed=8)
     with open_oriented(source) as image:
         plain = image.convert("RGB")
-        assert apply_watermark(plain, "", 0.28) is plain
+        assert apply_watermark(plain, Watermark("", 0.65)) is plain
 
 
 def test_copie_verifiee_identique(tmp_path):

@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import Config
 from .imaging import (
     copy_verified,
+    sha1_of,
     make_preview,
     make_thumbnail,
     open_oriented,
@@ -200,14 +201,12 @@ class Processor:
             opened_at=row.shot_at,
         )
         destination = (
-            self.config.archive_dir
-            / "cards"
-            / session_date
-            / f"{row.code}-{row.filename}"
+            self.config.archive_dir / "cards" / session_date / f"{row.code}-{row.filename}"
         )
-        copy_verified(row.path, destination)
+        sha1 = copy_verified(row.path, destination)
+        self._warn_if_card_reused(row, session_date)
         # La carte ne recoit ni preview, ni vignette, ni cle R2 : elle s'arrete ici.
-        self.queue.update(row.path, state=FileState.DONE, session_id=session.id)
+        self.queue.update(row.path, state=FileState.DONE, session_id=session.id, sha1=sha1)
         self.queue.clear_error(row.path)
         self._reassign_after_card(session, row.shot_at)
         return True
@@ -230,18 +229,14 @@ class Processor:
                 self.config.work_dir / preview_key,
                 self.config.preview_max_edge,
                 self.config.preview_quality,
-                self.config.watermark_text,
-                self.config.watermark_opacity,
-                self.config.watermark_font,
+                self.config.watermark,
             )
             make_thumbnail(
                 image,
                 self.config.work_dir / thumb_key,
                 self.config.thumb_max_edge,
                 self.config.thumb_quality,
-                self.config.watermark_text,
-                self.config.watermark_opacity,
-                self.config.watermark_font,
+                self.config.watermark,
             )
 
         # Archive locale de l'original, copie verifiee par empreinte.
@@ -274,18 +269,37 @@ class Processor:
     def _upload(self, row: FileRow, now: float) -> bool:
         """Depose previews et original sur le stockage objet (local en phase A)."""
         assert row.session_id and row.preview_key and row.thumb_key and row.original_key
-        session = self.queue.session(row.session_id)
-        assert session is not None
-        archive_path = (
-            self.config.archive_dir / session.session_date / session.code / row.filename
-        )
-        self.storage.put(self.config.work_dir / row.preview_key, self.config.previews_bucket, row.preview_key)
-        self.storage.put(self.config.work_dir / row.thumb_key, self.config.previews_bucket, row.thumb_key)
+        archive_path = self._archive_path(row)
+        assert archive_path is not None
+        preview = self.config.work_dir / row.preview_key
+        thumb = self.config.work_dir / row.thumb_key
+        self.storage.put(preview, self.config.previews_bucket, row.preview_key)
+        self.storage.put(thumb, self.config.previews_bucket, row.thumb_key)
         self.storage.put(archive_path, self.config.originals_bucket, row.original_key)
         self.queue.update(row.path, state=FileState.UPLOADED)
         self.queue.clear_error(row.path)
         self.queue.refresh_photo_count(row.session_id)
+        # Le dossier de travail n'est qu'un sas : une fois les derives deposes,
+        # ils n'ont plus de raison d'occuper le disque du mini-PC.
+        preview.unlink(missing_ok=True)
+        thumb.unlink(missing_ok=True)
         return True
+
+    def _archive_path(self, row: FileRow) -> Path | None:
+        """Ou l'original (ou la photo de carte) est archive localement."""
+        if not row.session_id:
+            return None
+        session = self.queue.session(row.session_id)
+        if session is None:  # pragma: no cover - incoherence de base
+            return None
+        if row.is_card:
+            return (
+                self.config.archive_dir
+                / "cards"
+                / session.session_date
+                / f"{session.code}-{row.filename}"
+            )
+        return self.config.archive_dir / session.session_date / session.code / row.filename
 
     def _register_uploaded(self, now: float) -> int:
         """Declare les photos deposees, groupees par session (contrat /api/ingest)."""
@@ -371,6 +385,81 @@ class Processor:
             "filename_conflict", f"{row.filename} renomme en {candidate}", row.path
         )
         return candidate
+
+    def _warn_if_card_reused(self, row: FileRow, session_date: str) -> None:
+        """Signale une carte rephotographiee le meme jour.
+
+        Une session est identifiee par (code, date) : deux groupes servis avec la
+        meme carte le meme jour partagent donc la meme galerie, et chacun voit
+        les photos de l'autre. Le pont ne peut pas les separer -- le code est le
+        seul identifiant que le visiteur possede -- mais il ne doit pas laisser
+        passer ca en silence.
+        """
+        assert row.code
+        autres = [
+            autre
+            for autre in self.queue.other_card_shots(row.code, session_date, row.path)
+            if (autre.shot_at or "") < (row.shot_at or "")
+        ]
+        if not autres:
+            return  # premiere prise de vue de cette carte ce jour-la
+        message = (
+            f"carte {row.code} rephotographiee le {session_date} "
+            f"({len(autres) + 1} fois) : les groupes partagent la meme galerie"
+        )
+        log.warning("carte reutilisee le meme jour", extra={"code": row.code, "fois": len(autres) + 1})
+        self.queue.record_event("card_reused", message, row.path)
+
+    def purge_inbox(self, now: float | None = None) -> int:
+        """Efface de l'inbox les fichiers termines et archives depuis N jours.
+
+        `now` est un instant de l'horloge murale (time.time()), pas la base de
+        temps du backoff : la retention se compare a `updated_at`, qui est une
+        date reelle.
+
+        Ne supprime que ce qui est verifiable : l'archive locale doit exister et
+        son empreinte doit correspondre a celle enregistree au traitement. Un
+        doute, et le fichier reste.
+        """
+        if self.config.inbox_retention_days <= 0:
+            return 0
+        now = time.time() if now is None else now
+        horizon = datetime.fromtimestamp(now).astimezone() - timedelta(
+            days=self.config.inbox_retention_days
+        )
+        limite = horizon.isoformat(timespec="seconds")
+
+        efface = 0
+        for row in self.queue.purgeable(limite):
+            if not row.path.exists():
+                continue
+            archive = self._archive_path(row)
+            if archive is None or not archive.is_file():
+                log.warning(
+                    "purge annulee, archive introuvable",
+                    extra={"file": row.filename},
+                )
+                continue
+            if row.sha1 and sha1_of(archive) != row.sha1:
+                log.error(
+                    "purge annulee, archive differente de l'original",
+                    extra={"file": row.filename, "archive": str(archive)},
+                )
+                self.queue.record_event(
+                    "purge_conflict",
+                    f"{row.filename}: archive differente de l'original, non purge",
+                    row.path,
+                )
+                continue
+            row.path.unlink()
+            efface += 1
+        if efface:
+            log.info(
+                "inbox purgee",
+                extra={"count": efface, "retention_days": self.config.inbox_retention_days},
+            )
+            self.queue.record_event("purge", f"{efface} fichier(s) efface(s) de l'inbox")
+        return efface
 
     def _reassign_after_card(self, session: SessionRow, card_shot_at: str) -> None:
         """Rattrape les photos rangees trop tot quand la carte arrive en retard.

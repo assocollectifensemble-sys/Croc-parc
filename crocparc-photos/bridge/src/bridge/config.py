@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from datetime import timedelta, timezone
 from pathlib import Path
 
+from .models import Watermark
+
 TZ_OFFSET_RE = re.compile(r"^([+-])(\d{2}):?(\d{2})$")
 
 
@@ -109,6 +111,8 @@ class Config:
     poll_interval: float
     rescan_interval: float
     extensions: tuple[str, ...]
+    inbox_retention_days: int
+    purge_interval: float
 
     # Reprise sur erreur
     base_backoff: float
@@ -122,6 +126,8 @@ class Config:
     thumb_quality: int
     watermark_text: str
     watermark_opacity: float
+    watermark_scale: float
+    watermark_spacing: float
     watermark_font: Path | None
     qr_scan_max_edge: int
 
@@ -185,7 +191,7 @@ class Config:
         if not extensions:
             raise ConfigError("BRIDGE_EXTENSIONS ne peut pas etre vide")
 
-        opacity = _get_float("WATERMARK_OPACITY", 0.5)
+        opacity = _get_float("WATERMARK_OPACITY", 0.65)
         if not 0.0 < opacity <= 1.0:
             raise ConfigError(
                 f"WATERMARK_OPACITY doit etre dans ]0, 1], recu {opacity}"
@@ -207,6 +213,8 @@ class Config:
             poll_interval=_get_float("BRIDGE_POLL_INTERVAL", 1.0),
             rescan_interval=_get_float("BRIDGE_RESCAN_INTERVAL", 30.0),
             extensions=extensions,
+            inbox_retention_days=_get_int("BRIDGE_INBOX_RETENTION_DAYS", 15),
+            purge_interval=_get_float("BRIDGE_PURGE_INTERVAL", 3600.0),
             base_backoff=_get_float("BRIDGE_BASE_BACKOFF", 5.0),
             max_backoff=_get_float("BRIDGE_MAX_BACKOFF", 300.0),
             max_attempts=_get_int("BRIDGE_MAX_ATTEMPTS", 10),
@@ -216,6 +224,8 @@ class Config:
             thumb_quality=_get_int("THUMB_QUALITY", 75),
             watermark_text=_get("WATERMARK_TEXT", "CROC PARC"),
             watermark_opacity=opacity,
+            watermark_scale=_get_float("WATERMARK_SCALE", 0.06),
+            watermark_spacing=_get_float("WATERMARK_SPACING", 0.85),
             watermark_font=Path(watermark_font_raw).expanduser() if watermark_font_raw else None,
             qr_scan_max_edge=_get_int("QR_SCAN_MAX_EDGE", 1024),
             gallery_base_url=gallery_base_url,
@@ -231,6 +241,17 @@ class Config:
             log_level=_get("BRIDGE_LOG_LEVEL", "info").lower(),
             log_max_bytes=_get_int("BRIDGE_LOG_MAX_BYTES", 5 * 1024 * 1024),
             log_backups=_get_int("BRIDGE_LOG_BACKUPS", 5),
+        )
+
+    @property
+    def watermark(self) -> Watermark:
+        """Reglage du filigrane, assemble une fois pour tous les appels."""
+        return Watermark(
+            text=self.watermark_text,
+            opacity=self.watermark_opacity,
+            scale=self.watermark_scale,
+            spacing=self.watermark_spacing,
+            font_path=self.watermark_font,
         )
 
     def ensure_dirs(self) -> None:

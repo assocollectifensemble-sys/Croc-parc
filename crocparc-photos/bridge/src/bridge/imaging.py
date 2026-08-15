@@ -17,7 +17,7 @@ from pathlib import Path
 
 from PIL import ExifTags, Image, ImageDraw, ImageFont, ImageOps
 
-from .models import ImageMetadata
+from .models import ImageMetadata, Watermark
 
 log = logging.getLogger(__name__)
 
@@ -99,29 +99,24 @@ def _load_font(size: int, font_path: Path | None) -> ImageFont.FreeTypeFont | Im
     return ImageFont.load_default(size=size)
 
 
-def apply_watermark(
-    image: Image.Image,
-    text: str,
-    opacity: float,
-    font_path: Path | None = None,
-) -> Image.Image:
+def apply_watermark(image: Image.Image, style: Watermark) -> Image.Image:
     """Appose un filigrane semi-transparent en diagonale, repete sur l'image.
 
     Le texte est rendu une seule fois dans une petite vignette, tournee une fois,
     puis repetee en quinconce : sur le mini-PC du parc, faire tourner un calque
     de la taille de l'image coute dix fois plus cher pour le meme resultat.
     """
-    if not text:
+    if not style.text:
         return image
 
     base = image.convert("RGBA")
     width, height = base.size
-    font_size = max(14, int(min(width, height) * 0.055))
-    font = _load_font(font_size, font_path)
-    alpha = max(1, min(255, int(255 * opacity)))
+    font_size = max(14, int(min(width, height) * style.scale))
+    font = _load_font(font_size, style.font_path)
+    alpha = max(1, min(255, int(255 * style.opacity)))
 
     measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
-    left, top, right, bottom = measure.textbbox((0, 0), text, font=font)
+    left, top, right, bottom = measure.textbbox((0, 0), style.text, font=font)
     padding = max(2, font_size // 8)
     sprite = Image.new(
         "RGBA",
@@ -130,7 +125,7 @@ def apply_watermark(
     )
     ImageDraw.Draw(sprite).text(
         (padding - left, padding - top),
-        text,
+        style.text,
         font=font,
         fill=(255, 255, 255, alpha),
         stroke_width=max(1, font_size // 24),
@@ -139,8 +134,8 @@ def apply_watermark(
     sprite = sprite.rotate(30, resample=Image.Resampling.BICUBIC, expand=True)
 
     layer = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    step_x = sprite.width + font_size * 2
-    step_y = sprite.height + font_size * 2
+    step_x = sprite.width + int(font_size * style.spacing)
+    step_y = sprite.height + int(font_size * style.spacing)
     row = 0
     for y in range(-sprite.height, height + step_y, step_y):
         offset = (step_x // 2) if row % 2 else 0
@@ -156,10 +151,7 @@ def _derive(
     destination: Path,
     max_edge: int,
     quality: int,
-    watermark_text: str,
-    watermark_opacity: float,
-    font_path: Path | None,
-    icc_profile: bytes | None,
+    watermark: Watermark,
 ) -> tuple[int, int]:
     source = image.convert("RGB")
     # On reduit, jamais on n'agrandit : un original plus petit que la cible reste
@@ -169,9 +161,10 @@ def _derive(
         if max(source.size) > max_edge
         else source
     )
-    stamped = apply_watermark(resized, watermark_text, watermark_opacity, font_path)
+    stamped = apply_watermark(resized, watermark)
     destination.parent.mkdir(parents=True, exist_ok=True)
     save_kwargs = {"quality": quality, "optimize": True, "progressive": True}
+    icc_profile = image.info.get("icc_profile")
     if icc_profile:
         save_kwargs["icc_profile"] = icc_profile
     # Aucun argument `exif=` : les derives partent sans metadonnees, donc sans GPS.
@@ -184,20 +177,9 @@ def make_preview(
     destination: Path,
     max_edge: int,
     quality: int,
-    watermark_text: str,
-    watermark_opacity: float,
-    font_path: Path | None = None,
+    watermark: Watermark,
 ) -> tuple[int, int]:
-    return _derive(
-        image,
-        destination,
-        max_edge,
-        quality,
-        watermark_text,
-        watermark_opacity,
-        font_path,
-        image.info.get("icc_profile"),
-    )
+    return _derive(image, destination, max_edge, quality, watermark)
 
 
 def make_thumbnail(
@@ -205,20 +187,9 @@ def make_thumbnail(
     destination: Path,
     max_edge: int,
     quality: int,
-    watermark_text: str,
-    watermark_opacity: float,
-    font_path: Path | None = None,
+    watermark: Watermark,
 ) -> tuple[int, int]:
-    return _derive(
-        image,
-        destination,
-        max_edge,
-        quality,
-        watermark_text,
-        watermark_opacity,
-        font_path,
-        image.info.get("icc_profile"),
-    )
+    return _derive(image, destination, max_edge, quality, watermark)
 
 
 def copy_verified(source: Path, destination: Path) -> str:

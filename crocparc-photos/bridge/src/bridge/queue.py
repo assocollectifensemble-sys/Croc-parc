@@ -406,6 +406,31 @@ class Queue:
         ).fetchone()
         return (row["session_id"], row["shot_at"]) if row else None
 
+    def other_card_shots(self, code: str, day: str, exclude_path: Path) -> list[FileRow]:
+        """Autres photos de la meme carte le meme jour : la carte a resservi."""
+        rows = self.conn.execute(
+            """
+            SELECT * FROM files
+             WHERE is_card = 1 AND code = ? AND substr(shot_at, 1, 10) = ?
+               AND path != ?
+             ORDER BY shot_at
+            """,
+            (code, day, str(exclude_path)),
+        ).fetchall()
+        return [FileRow.from_sqlite(row) for row in rows]
+
+    def purgeable(self, before: str) -> list[FileRow]:
+        """Fichiers termines dont l'original de l'inbox peut etre efface."""
+        rows = self.conn.execute(
+            """
+            SELECT * FROM files
+             WHERE state = ? AND updated_at < ?
+             ORDER BY updated_at
+            """,
+            (FileState.DONE.value, before),
+        ).fetchall()
+        return [FileRow.from_sqlite(row) for row in rows]
+
     def photos_to_reassign(self, since_shot_at: str, session_id: str) -> list[FileRow]:
         """Photos deja rangees ailleurs qu'une carte tardive vient de reclamer."""
         rows = self.conn.execute(

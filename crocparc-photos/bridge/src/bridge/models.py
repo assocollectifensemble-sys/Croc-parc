@@ -46,6 +46,22 @@ class SessionStatus(StrEnum):
 
 
 @dataclass(frozen=True)
+class Watermark:
+    """Reglage du filigrane, regroupe pour ne pas trainer six arguments.
+
+    `scale` est une fraction du bord court de l'image : le filigrane garde la
+    meme presence sur une preview 2048 px et sur une vignette 512 px.
+    `spacing` est l'ecart entre deux marques, en multiples de la taille du texte.
+    """
+
+    text: str
+    opacity: float
+    scale: float = 0.06
+    spacing: float = 0.85
+    font_path: Path | None = None
+
+
+@dataclass(frozen=True)
 class CardRef:
     """Ce qu'un QR de carte separatrice nous apprend."""
 
@@ -84,6 +100,7 @@ class FileRow:
     preview_key: str | None = None
     thumb_key: str | None = None
     original_key: str | None = None
+    sha1: str | None = None
     attempts: int = 0
     next_attempt_at: float = 0.0
     last_error: str | None = None
@@ -107,6 +124,7 @@ class FileRow:
             preview_key=row["preview_key"],
             thumb_key=row["thumb_key"],
             original_key=row["original_key"],
+            sha1=row["sha1"],
             attempts=row["attempts"],
             next_attempt_at=row["next_attempt_at"],
             last_error=row["last_error"],

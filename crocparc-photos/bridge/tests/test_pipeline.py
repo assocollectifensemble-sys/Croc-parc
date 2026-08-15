@@ -7,7 +7,9 @@ sans les photos de cartes.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -132,7 +134,13 @@ def test_previews_filigranees_et_dimensionnees(config, queue, processor):
     # Reference : la meme preview fabriquee par le meme code, filigrane coupe.
     reference = config.work_dir / "reference.jpg"
     with open_oriented(source) as image:
-        make_preview(image, reference, config.preview_max_edge, config.preview_quality, "", 0.35)
+        make_preview(
+            image,
+            reference,
+            config.preview_max_edge,
+            config.preview_quality,
+            dataclasses.replace(config.watermark, text=""),
+        )
     with Image.open(reference) as image:
         nue = image.convert("RGB").tobytes()
 
@@ -329,3 +337,99 @@ def test_jpeg_illisible_mis_en_quarantaine(config, queue, processor):
     assert ligne.state is FileState.FAILED
     assert "ImageError" in ligne.last_error
     assert any(evenement["kind"] == "quarantine" for evenement in queue.events())
+
+
+# -- retention et reutilisation des cartes ------------------------------------
+def test_purge_de_l_inbox_apres_retention(config, queue, processor):
+    """Les originaux de l'inbox s'effacent une fois archives depuis 15 jours."""
+    deposer_journee(config.inbox_dir)
+    run(processor, config, queue)
+    assert len(list(config.inbox_dir.glob("*.JPG"))) == 30
+
+    # La retention se compte sur l'horloge murale, pas sur la base de temps du
+    # backoff : rien ne part avant l'echeance.
+    assert processor.purge_inbox(now=time.time()) == 0
+    assert len(list(config.inbox_dir.glob("*.JPG"))) == 30
+
+    assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 30
+    assert list(config.inbox_dir.glob("*.JPG")) == []
+
+    # Les archives et la sortie publiable, elles, ne bougent pas.
+    assert len(cles(config, config.originals_bucket)) == 27
+    assert len(list((config.archive_dir / JOUR).rglob("*.JPG"))) == 27
+    assert len(list((config.archive_dir / "cards").rglob("*.JPG"))) == 3
+    # Et un balayage apres purge ne ressuscite rien.
+    scan_inbox(config, queue)
+    assert [s.photo_count for s in queue.sessions_for_day(JOUR)] == [9, 9, 9]
+
+
+def test_purge_refuse_si_l_archive_manque(config, queue, processor):
+    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    run(processor, config, queue)
+
+    (config.archive_dir / JOUR / "K7M2QP" / "DSC00002.JPG").unlink()
+    assert processor.purge_inbox(now=time.time() + 16 * 24 * 3600) == 1  # seule la carte part
+    assert photo.exists()
+
+
+def test_purge_refuse_si_l_archive_differe(config, queue, processor):
+    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    photo = make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    run(processor, config, queue)
+
+    archive = config.archive_dir / JOUR / "K7M2QP" / "DSC00002.JPG"
+    archive.write_bytes(archive.read_bytes() + b"corruption")
+    processor.purge_inbox(now=time.time() + 16 * 24 * 3600)
+    assert photo.exists()
+    assert any(evenement["kind"] == "purge_conflict" for evenement in queue.events())
+
+
+def test_purge_desactivable(config, queue, tmp_path):
+    configuration = dataclasses.replace(config, inbox_retention_days=0)
+    processeur = Processor(
+        configuration, queue, LocalStorage(configuration.output_dir), NullRegistrar()
+    )
+    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    run(processeur, configuration, queue)
+    assert processeur.purge_inbox(now=time.time() + 365 * 24 * 3600) == 0
+    assert (config.inbox_dir / "DSC00001.JPG").exists()
+
+
+def test_le_sas_de_travail_ne_grossit_pas(config, queue, processor):
+    """Les derives sont effaces du dossier de travail une fois deposes."""
+    deposer_journee(config.inbox_dir)
+    run(processor, config, queue)
+    assert list(config.work_dir.rglob("*.jpg")) == []
+    assert len(cles(config, config.previews_bucket)) == 54
+
+
+def test_carte_rephotographiee_le_meme_jour_est_signalee(config, queue, processor):
+    """Deux groupes, une seule carte, le meme jour : galerie partagee, alerte levee."""
+    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.inbox_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 15, 14, 0))
+    make_photo(config.inbox_dir / "DSC00004.JPG", datetime(2026, 10, 15, 14, 5), seed=4)
+
+    run(processor, config, queue)
+
+    sessions = queue.sessions_for_day(JOUR)
+    assert len(sessions) == 1  # une session par (code, date)
+    assert sessions[0].photo_count == 2
+    alertes = [e for e in queue.events() if e["kind"] == "card_reused"]
+    assert len(alertes) == 1
+    assert "K7M2QP" in alertes[0]["message"]
+
+
+def test_carte_reutilisee_un_autre_jour_ouvre_une_session_neuve(config, queue, processor):
+    make_card(config.inbox_dir / "DSC00001.JPG", "K7M2QP", datetime(2026, 10, 15, 10, 0))
+    make_photo(config.inbox_dir / "DSC00002.JPG", datetime(2026, 10, 15, 10, 5), seed=2)
+    make_card(config.inbox_dir / "DSC00003.JPG", "K7M2QP", datetime(2026, 10, 16, 10, 0))
+    make_photo(config.inbox_dir / "DSC00004.JPG", datetime(2026, 10, 16, 10, 5), seed=4)
+
+    run(processor, config, queue)
+
+    assert len(queue.sessions_for_day("2026-10-15")) == 1
+    assert len(queue.sessions_for_day("2026-10-16")) == 1
+    assert queue.sessions_for_day("2026-10-15")[0].id != queue.sessions_for_day("2026-10-16")[0].id
+    assert not [e for e in queue.events() if e["kind"] == "card_reused"]

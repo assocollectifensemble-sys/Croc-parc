@@ -4,6 +4,7 @@
     python -m bridge once     # traite ce qui est en attente puis rend la main
     python -m bridge status   # etat de la file, sans rien modifier
     python -m bridge retry    # sort les fichiers en quarantaine et les rejoue
+    python -m bridge purge    # efface de l'inbox les originaux deja archives
 """
 
 from __future__ import annotations
@@ -58,8 +59,14 @@ def cmd_run(config: Config) -> int:
     signal.signal(signal.SIGTERM, handle_signal)
 
     scan_inbox(config, queue)
-    last_scan = time.time()
-    log.info("pont demarre", extra={"inbox": str(config.inbox_dir)})
+    last_scan = last_purge = time.time()
+    log.info(
+        "pont demarre",
+        extra={
+            "inbox": str(config.inbox_dir),
+            "retention_days": config.inbox_retention_days,
+        },
+    )
 
     try:
         while not stop.is_set():
@@ -68,6 +75,9 @@ def cmd_run(config: Config) -> int:
                 scan_inbox(config, queue)
                 last_scan = now
             processor.tick(now=now)
+            if now - last_purge >= config.purge_interval:
+                processor.purge_inbox(now=now)
+                last_purge = now
             stop.wait(config.poll_interval)
     finally:
         observer.stop()
@@ -93,6 +103,17 @@ def cmd_once(config: Config) -> int:
     return 0 if steps >= 0 else 1
 
 
+def cmd_purge(config: Config) -> int:
+    queue, processor = build(config)
+    efface = processor.purge_inbox()
+    print(
+        f"{efface} fichier(s) efface(s) de l'inbox "
+        f"(retention : {config.inbox_retention_days} jours)"
+    )
+    queue.close()
+    return 0
+
+
 def cmd_status(config: Config) -> int:
     queue, _ = build(config)
     print(json.dumps(snapshot(queue, time.time()), ensure_ascii=False, indent=2))
@@ -112,7 +133,13 @@ def cmd_retry(config: Config) -> int:
     return 0
 
 
-COMMANDS = {"run": cmd_run, "once": cmd_once, "status": cmd_status, "retry": cmd_retry}
+COMMANDS = {
+    "run": cmd_run,
+    "once": cmd_once,
+    "status": cmd_status,
+    "retry": cmd_retry,
+    "purge": cmd_purge,
+}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -91,7 +91,9 @@ Les reglages les plus utiles :
 | `BRIDGE_STABLE_SECONDS` | `2.0` | duree sans changement de taille avant traitement |
 | `PREVIEW_MAX_EDGE` / `PREVIEW_QUALITY` | `2048` / `82` | preview filigranee |
 | `THUMB_MAX_EDGE` / `THUMB_QUALITY` | `512` / `75` | vignette |
-| `WATERMARK_TEXT` / `WATERMARK_OPACITY` | `CROC PARC` / `0.5` | filigrane |
+| `WATERMARK_TEXT` / `WATERMARK_OPACITY` | `CROC PARC` / `0.65` | texte et opacite du filigrane |
+| `WATERMARK_SCALE` / `WATERMARK_SPACING` | `0.06` / `0.85` | taille du texte (fraction du bord court) et densite du maillage |
+| `BRIDGE_INBOX_RETENTION_DAYS` | `15` | effacement des originaux de l'inbox une fois archives (0 = jamais) |
 | `SESSION_TTL_DAYS` | `30` | duree de vie d'une session |
 | `BRIDGE_TZ_OFFSET` | `+04:00` | La Reunion, pas d'heure d'ete |
 | `BRIDGE_STORAGE_BACKEND` | `local` | `local` en phase A, `r2` en phase B |
@@ -106,7 +108,15 @@ python -m bridge run      # service : surveille, traite, expose /health
 python -m bridge once     # traite ce qui est en attente puis rend la main
 python -m bridge status   # etat de la file et incidents du jour
 python -m bridge retry    # remet en file les fichiers en quarantaine
+python -m bridge purge    # efface de l'inbox les originaux deja archives
 ```
+
+`purge` tourne aussi toute seule dans `run`, une fois par heure. Elle n'efface
+un fichier de l'inbox que si son archive locale existe **et** que son empreinte
+correspond a celle enregistree au traitement ; au moindre doute, le fichier
+reste et l'incident est journalise. L'archive locale
+(`data/originals/`), elle, n'est jamais purgee par le pont : c'est la copie de
+secours des originaux.
 
 Supervision :
 
