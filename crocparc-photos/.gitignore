@@ -13,3 +13,6 @@ __pycache__/
 .dev.vars
 .wrangler/
 node_modules/
+
+# Secrets generes a la mise en ligne
+.secrets-mise-en-ligne

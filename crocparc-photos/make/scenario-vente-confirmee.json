@@ -1,0 +1,87 @@
+{
+  "name": "Croc Parc Photos — vente confirmée",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": 3552822, "maxResults": 1 },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": { "parameters": { "hook": { "label": "Croc Parc Photos — vente confirmée" } } },
+        "interface": [
+          { "name": "code", "type": "text", "label": "Code de la carte" },
+          { "name": "session_date", "type": "text", "label": "Date de la visite" },
+          { "name": "email", "type": "text", "label": "Courriel du client" },
+          { "name": "produit", "type": "text", "label": "Produit (single ou pack)" },
+          { "name": "montant_euros", "type": "number", "label": "Montant en euros" },
+          { "name": "nombre_photos", "type": "number", "label": "Nombre de photos" },
+          { "name": "lien_telechargement", "type": "text", "label": "Lien de téléchargement" }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": { "designer": { "x": 300, "y": 0 } },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 3,
+              "module": "email:ActionSendEmail",
+              "version": 8,
+              "parameters": { "account": null },
+              "filter": {
+                "name": "Le client a laissé une adresse",
+                "conditions": [[{ "a": "{{1.email}}", "o": "exist" }]]
+              },
+              "mapper": {
+                "to": ["{{1.email}}"],
+                "subject": "Vos photos du Croc Parc sont prêtes",
+                "contentType": "html",
+                "html": "<p>Bonjour,</p><p>Merci pour votre achat. Vos {{1.nombre_photos}} photos de la visite du {{formatDate(parseDate(1.session_date; \"YYYY-MM-DD\"); \"D MMMM YYYY\")}} sont prêtes.</p><p><a href=\"{{1.lien_telechargement}}\" style=\"display:inline-block;padding:12px 24px;background:#2f6b4f;color:#fff;border-radius:8px;text-decoration:none\">Télécharger mes photos</a></p><p>Ce lien reste valable 30 jours. Passé ce délai, les photos sont définitivement effacées de nos serveurs.</p><p>À bientôt au Croc Parc.</p>"
+              },
+              "metadata": { "designer": { "x": 600, "y": -150 } }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "email:ActionSendEmail",
+              "version": 8,
+              "parameters": { "account": null },
+              "mapper": {
+                "to": ["jonskyewalker@gmail.com"],
+                "subject": "Croc Parc — vente {{1.montant_euros}} € ({{1.code}})",
+                "contentType": "text",
+                "text": "Vente confirmée.\n\nCode carte    : {{1.code}}\nVisite du     : {{1.session_date}}\nProduit       : {{1.produit}}\nPhotos        : {{1.nombre_photos}}\nMontant       : {{1.montant_euros}} €\nClient        : {{1.email}}\n"
+              },
+              "metadata": { "designer": { "x": 600, "y": 150 } }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": { "orphans": [] }
+  }
+}

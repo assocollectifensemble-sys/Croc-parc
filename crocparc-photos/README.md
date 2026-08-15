@@ -237,24 +237,20 @@ WantedBy=multi-user.target
 `Restart=always` est sans danger : la reprise apres coupure est testee, aucun
 doublon n'est cree.
 
-## Cote Cloudflare
-
-### Premiere mise en place
+## Mise en ligne
 
 ```bash
-npm install
-
-# Base de donnees : reporter l'identifiant retourne dans wrangler.toml
-npx wrangler d1 create crocparc-photos
-npx wrangler d1 migrations apply crocparc-photos --remote
-
-# Buckets. Seul le premier est en lecture publique.
-npx wrangler r2 bucket create crocparc-previews
-npx wrangler r2 bucket create crocparc-originals
-
-# Secret partage : la meme valeur que BRIDGE_SHARED_SECRET cote pont
-npx wrangler pages secret put BRIDGE_SHARED_SECRET
+npx wrangler login          # une fois, ouvre le navigateur
+./tools/mise-en-ligne.sh
 ```
+
+Le script cree le projet Pages, la base D1, les deux buckets R2, applique le
+schema, genere et pose les secrets, deploie le site et le Worker de purge. Il
+est rejouable et s'arrete a la premiere erreur.
+
+**[docs/MISE-EN-LIGNE.md](docs/MISE-EN-LIGNE.md)** donne la marche complete,
+dans l'ordre : Cloudflare, Stripe, le pont et son tunnel, Make, les cartes, et
+la repetition generale a faire avant d'ouvrir au public.
 
 ### Developpement local
 
