@@ -237,6 +237,19 @@ WantedBy=multi-user.target
 `Restart=always` est sans danger : la reprise apres coupure est testee, aucun
 doublon n'est cree.
 
+## Essayer sans rien creer
+
+```bash
+./tools/essai-local.sh
+```
+
+Monte toute la chaine sur une seule machine -- pont, base, API, galerie -- sans
+aucun compte et sans rien publier. Le script imprime une planche de cartes dont
+les QR pointent sur la machine, et affiche l'adresse a ouvrir depuis un
+telephone du meme reseau. De quoi valider le geste de la photographe et le
+reglage du filigrane avant d'aller plus loin. Seul le paiement manque, faute de
+cles Stripe.
+
 ## Mise en ligne
 
 ```bash

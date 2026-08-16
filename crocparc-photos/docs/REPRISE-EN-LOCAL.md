@@ -43,6 +43,34 @@ npm run typecheck
 
 Si ces trois commandes passent, le code est dans l'etat ou il a ete laisse.
 
+## Etape 0 — l'essai sans compte, a faire en premier
+
+Avant de creer quoi que ce soit chez Cloudflare, on peut faire tourner toute la
+chaine sur une seule machine, gratuitement :
+
+```bash
+./tools/essai-local.sh
+```
+
+Le script verifie que les ports sont libres, prepare une base locale, imprime
+une planche de huit cartes dont les QR pointent sur cette machine, puis demarre
+le pont, l'API et la galerie. Il affiche l'adresse a ouvrir depuis un telephone
+connecte au meme wifi.
+
+Ensuite : photographier une carte, puis deux ou trois sujets, copier les JPEG
+de la carte memoire vers `essai/inbox/` (le FTP n'est pas necessaire pour un
+essai), attendre une dizaine de secondes, et ouvrir la galerie.
+
+Ce que l'essai couvre : la carte photographiee comme separateur, le tri par
+session, les previews filigranees, la galerie sur telephone, la console
+d'administration. Ce qu'il ne couvre pas : le paiement (il faut des cles
+Stripe) et le tunnel.
+
+C'est le meilleur moyen de valider le **geste de la photographe** et le
+**reglage du filigrane** avant d'investir dans la mise en ligne. Verifie de
+bout en bout sur cette machine : 4 fichiers deposes, 1 session, 3 photos
+publiees, galerie servie.
+
 ## Etape 1 — Cloudflare
 
 ```bash
