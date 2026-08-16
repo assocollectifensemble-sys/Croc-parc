@@ -11,7 +11,7 @@
       forcer les téléphones à retélécharger la nouvelle version.
    ============================================================ */
 
-const CACHE_VERSION = "crokiparc-v20";
+const CACHE_VERSION = "crokiparc-v21";
 
 const APP_SHELL = [
   "./",

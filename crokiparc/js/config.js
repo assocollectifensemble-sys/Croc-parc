@@ -226,7 +226,7 @@ const DEFAULT_CONFIG = {
   // qui reste à faire dans le vrai monde, elle passe donc avant la célébration.
   vaVoirAnimateur: {
     cle: "va_voir_animateur",
-    texte: "Va vite montrer ce mot à l'animateur du jour : il a une surprise pour toi ! 🎁"
+    texte: "Va vite dire ce mot à l'oreille de l'animateur du jour : il a une surprise pour toi ! 🎁"
   },
 
   final: {
