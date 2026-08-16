@@ -56,7 +56,7 @@ Tout est expliqué dans **[`docs/STATISTIQUES.md`](docs/STATISTIQUES.md)**.
 
 ## Déploiement
 
-Manuel, sur Netlify : glisser le dossier `crokiparc/`. Pas de CI/CD.
+Manuel, sur Netlify. Marche à suivre détaillée : **[`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md)**.
 Penser à incrémenter `CACHE_VERSION` avant chaque mise en ligne.
 
 ## Contact
