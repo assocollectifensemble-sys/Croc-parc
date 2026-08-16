@@ -188,19 +188,21 @@
     </div>
   </div>
 
-  <!-- PHASE 1bis : aller voir l'animateur -->
-  <div id="final-animateur-phase" style="display:none">
-    <div class="hero-croki"><img src="assets/img/croki-victoire-peace.webp" class="croki-img bounce" alt="Croki"></div>
-    <div class="card" style="text-align:center">
+  <!-- PHASE 2 : la fête, d'un seul tenant.
+       Mot trouvé + consigne animateur + célébration + avis Google sur UN SEUL
+       écran. Il y avait avant un bouton « J'ai été voir l'animateur » entre les
+       deux : les enfants partaient voir l'animateur sans jamais l'appuyer, donc
+       ils ne voyaient jamais l'appel à l'avis Google — et la partie n'était
+       jamais comptée comme terminée dans les statistiques. -->
+  <div id="final-fete-phase" style="display:none">
+
+    <!-- Ce qu'il faut faire MAINTENANT : en haut, avant la fête. -->
+    <div class="card card-animateur">
       <h2 class="puzzle-titre">🎉 Bravo, tu as trouvé le mot secret !</h2>
       <p class="mot-secret-affiche" id="txt-mot-secret-trouve">PARADIS</p>
-      <p class="gps-intro-txt" id="txt-va-voir-animateur">Va vite le dire à l'animateur du jour, il a une surprise pour toi !</p>
+      <p class="animateur-consigne" id="txt-va-voir-animateur"></p>
     </div>
-    <button class="btn btn-orange btn-sticky-cta" id="btn-jai-vu-animateur">🎁 J'ai été voir l'animateur !</button>
-  </div>
 
-  <!-- PHASE 2 : célébration -->
-  <div id="final-celebration-phase" style="display:none">
     <div class="hero-croki scene-complete" id="hero-final">
       <div class="video-round">
         <video id="video-outro" playsinline poster="assets/img/croki-victoire-medaille.webp">
@@ -209,17 +211,20 @@
         <button class="btn-son-video" id="btn-replay-outro" title="Revoir la vidéo" style="display:none">🔁</button>
       </div>
     </div>
+
     <div class="card" style="text-align:center;margin-top:10px">
       <h2 id="txt-final-titre"></h2>
       <p id="txt-final-score"></p>
       <div class="ings-collectes" id="wrap-ings-fin"></div>
       <div class="avis-bloc">
-        <p class="avis-txt">Cette visite guidée interactive vous a plu ? Racontez votre expérience dans un avis Google — vos retours aident vraiment CrocParc à s'améliorer ! 🙏</p>
-        <a class="btn btn-jaune" id="btn-avis-google" href="https://maps.app.goo.gl/9z3HJ1a9ryugV8Za6" target="_blank" rel="noopener">⭐ Laisser un avis Google</a>
+        <p class="avis-txt" id="txt-avis"></p>
       </div>
       <button class="btn btn-gris" id="btn-recommencer">🔄 Recommencer l'aventure</button>
       <a href="#" id="lien-contact-cache" class="lien-contact-cache">✨</a>
     </div>
+
+    <!-- Toujours visible, quel que soit le défilement : c'est le but de l'écran. -->
+    <a class="btn btn-jaune btn-sticky-cta" id="btn-avis-google" href="https://maps.app.goo.gl/9z3HJ1a9ryugV8Za6" target="_blank" rel="noopener">⭐ Laisser un avis Google</a>
   </div>
 </section>
 

@@ -59,6 +59,9 @@ webhookEvents: ["session_start", "reponse", "session_complete"],
 - `reponse` → une ligne par réponse d'enfant, **bonne ou mauvaise**, avec le
   temps de réflexion. C'est ce qui permet de voir quelle question bloque.
 - `session_complete` → une ligne par parcours terminé, avec la durée totale.
+  Elle part **dès que l'énigme finale est résolue**. Auparavant elle attendait
+  un clic sur « J'ai été voir l'animateur » que les enfants ne faisaient
+  presque jamais — les parcours terminés étaient donc largement sous-comptés.
 
 **Tous les autres événements** (`app_ouverte`, `stage_enter`, `stage_complete`,
 `puzzle_tentative`, `session_reprise`) continuent d'être enregistrés **en local**

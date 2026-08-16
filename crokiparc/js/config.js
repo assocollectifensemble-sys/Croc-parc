@@ -222,14 +222,17 @@ const DEFAULT_CONFIG = {
     texte: "Croki te pose une dernière énigme, Super Marmaille :\n— Mon premier est ce que tu fais quand tu avances.\n— Mon deuxième est un petit légume rouge et blanc.\n— Mon tout est un endroit merveilleux dont beaucoup rêvent.\nÀ toi d'écrire ce mot avec les lettres que tu as gagnées !"
   },
 
+  // Consigne affichée tout en haut de l'écran de fête : c'est la seule action
+  // qui reste à faire dans le vrai monde, elle passe donc avant la célébration.
   vaVoirAnimateur: {
     cle: "va_voir_animateur",
-    texte: "Bravo, tu as trouvé le mot secret, Super Marmaille ! Va vite le dire à l'animateur du jour, il a une surprise pour toi !"
+    texte: "Va vite montrer ce mot à l'animateur du jour : il a une surprise pour toi ! 🎁"
   },
 
   final: {
     titre: "Bienvenue au PARADIS, Super Marmaille !",
-    bulle: "Nou lé arrivé, sa lé le paradis ! Grâce à toi, tous mes amis sont réunis, on rigole, on danse, la fête est parfaite ! Merci du fond du cœur, Super Marmaille, cette histoire finit sur un vrai Happy End. C'est parti pour la fête maintenant, viens me rejoindre dans les jeux gonflables ! Demande à un adulte de laisser un petit avis pour nous aider à nous améliorer, merci beaucoup !",
+    bulle: "Nou lé arrivé, sa lé le paradis ! Grâce à toi, tous mes amis sont réunis et la fête est parfaite. Merci du fond du cœur — viens me rejoindre dans les jeux gonflables !",
+    avis: "Un petit avis Google, laissé par un adulte, aide vraiment CrocParc à s'améliorer 🙏",
     crokiImage: "croki-victoire-medaille",
     crokiScene: true
   }

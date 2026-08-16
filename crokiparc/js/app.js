@@ -484,8 +484,6 @@ async function stageSuivante() {
 let puzzle = { slots: [], chips: [] };
 
 function wireFinalScreen() {
-  document.getElementById("btn-jai-vu-animateur").addEventListener("click", demarrerCelebration);
-
   document.getElementById("btn-recommencer").addEventListener("click", () => {
     const vid = document.getElementById("video-outro");
     vid.pause(); vid.currentTime = 0;
@@ -493,8 +491,7 @@ function wireFinalScreen() {
     etat.visited = [];
     CrokiStorage.resetProgress();
     document.getElementById("final-puzzle-phase").style.display = "block";
-    document.getElementById("final-animateur-phase").style.display = "none";
-    document.getElementById("final-celebration-phase").style.display = "none";
+    document.getElementById("final-fete-phase").style.display = "none";
     CrokiScene.setDefault();
     showScreen("screen-histoire");
     demarrerAccueil();
@@ -517,8 +514,7 @@ function wireFinalScreen() {
 function afficherFinal() {
   showScreen("screen-final");
   document.getElementById("final-puzzle-phase").style.display = "block";
-  document.getElementById("final-animateur-phase").style.display = "none";
-  document.getElementById("final-celebration-phase").style.display = "none";
+  document.getElementById("final-fete-phase").style.display = "none";
   document.getElementById("puzzle-hint").textContent = "";
   document.getElementById("txt-enigme").innerHTML = boldHTML(CFG.enigmeFinale.texte);
   puzzle.slots = new Array(CFG.motCible.length).fill(null);
@@ -577,7 +573,7 @@ function verifierPuzzle() {
     hint.textContent = "";
     playSuccess();
     CrokiScene.starburst();
-    setTimeout(afficherVaVoirAnimateur, 600);
+    setTimeout(afficherFete, 600);
   } else {
     playError();
     hint.textContent = "Pas encore… tape une lettre pour la reposer, et réessaie !";
@@ -586,27 +582,24 @@ function verifierPuzzle() {
   }
 }
 
-function afficherVaVoirAnimateur() {
-  document.getElementById("final-puzzle-phase").style.display = "none";
-  document.getElementById("final-animateur-phase").style.display = "block";
-  document.getElementById("txt-mot-secret-trouve").textContent = CFG.motCible;
-  document.getElementById("txt-va-voir-animateur").textContent = CFG.vaVoirAnimateur.texte;
-  lancerConfettis(24);
-  direTexte(CFG.vaVoirAnimateur.cle, CFG.vaVoirAnimateur.texte);
-}
-
-function demarrerCelebration() {
+/* Écran de fête : mot trouvé, consigne animateur, célébration et avis Google
+   d'un seul tenant. La partie est comptée comme terminée ICI, dès l'énigme
+   résolue — et non plus sur un clic que l'enfant, parti voir l'animateur, ne
+   faisait presque jamais. */
+function afficherFete() {
   const dureeTotale = Date.now() - etat.tempsDebutSession;
   tracker({ type: "session_complete", dureeMs: dureeTotale, etapesReussies: etat.visited.length });
   CrokiStorage.resetProgress();
-  document.getElementById("final-animateur-phase").style.display = "none";
-  const cel = document.getElementById("final-celebration-phase");
-  cel.style.display = "block";
+
+  document.getElementById("final-puzzle-phase").style.display = "none";
+  document.getElementById("final-fete-phase").style.display = "block";
   CrokiScene.setFinal();
 
-  const score = etat.visited.length;
+  document.getElementById("txt-mot-secret-trouve").textContent = CFG.motCible;
+  document.getElementById("txt-va-voir-animateur").textContent = CFG.vaVoirAnimateur.texte;
   document.getElementById("txt-final-titre").textContent = "🏆 " + CFG.final.titre;
   document.getElementById("txt-final-score").textContent = CFG.final.bulle;
+  document.getElementById("txt-avis").textContent = CFG.final.avis;
 
   const wrap = document.getElementById("wrap-ings-fin");
   wrap.innerHTML = "";
@@ -623,17 +616,29 @@ function demarrerCelebration() {
   setTimeout(() => lancerConfettis(40), 500);
   setTimeout(() => { CrokiScene.starburst(); CrokiScene.flashPulse(); }, 250);
 
+  // La consigne « va voir l'animateur » d'abord : c'est la seule qui demande
+  // quelque chose à l'enfant. Les félicitations viennent après la vidéo, pour
+  // ne pas parler par-dessus elle.
+  direTexte(CFG.vaVoirAnimateur.cle, CFG.vaVoirAnimateur.texte);
+
   const vid = document.getElementById("video-outro");
   const btnReplay = document.getElementById("btn-replay-outro");
+  let felicitationsDites = false;
+  const direFelicitations = () => {
+    if (felicitationsDites) return;
+    felicitationsDites = true;
+    direTexte("final__felicitations", CFG.final.bulle);
+  };
+
   vid.loop = false;
   vid.currentTime = 0;
   vid.muted = false;
   vid.volume = 1.0;
   btnReplay.style.display = "none";
+  vid.onended = () => { btnReplay.style.display = "flex"; direFelicitations(); };
   vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
-  vid.onended = () => { btnReplay.style.display = "flex"; };
-
-  direTexte("final__felicitations", CFG.final.bulle);
+  // Si la vidéo ne démarre pas (autoplay refusé, réseau), on ne perd pas la voix.
+  setTimeout(direFelicitations, 14000);
 }
 
 /* ---------------------------------------------------------
