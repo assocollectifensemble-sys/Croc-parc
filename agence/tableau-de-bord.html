@@ -1,0 +1,247 @@
+<title>Pilotage Croc Parc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,720&family=Outfit:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --fond:#F7F2E7; --surface:#FFFDF8; --surface-alt:#EFE6D4;
+    --texte:#1C2A20; --texte-doux:#4C5A50;
+    --accent:#3B6B4A; --accent-fort:#22402E;
+    --cta:#D94A2B; --attente:#B07817; --fait:#3B6B4A; --bloque:#9C3D54;
+    --bordure:rgba(28,42,32,.14); --piste:rgba(28,42,32,.08);
+    --pill-fait:#E4EDDD; --pill-cours:#FDF3DC; --pill-lancer:#EDEAE0; --pill-vert:#FBE5DC; --pill-bloque:#F5E0E6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --fond:#121B14; --surface:#1B2A1F; --surface-alt:#17241B;
+      --texte:#EFEAE0; --texte-doux:#B9C4B6;
+      --accent:#8FBF9A; --accent-fort:#C3D6B0;
+      --cta:#F0714F; --attente:#E5B45E; --fait:#8FBF9A; --bloque:#E08BA2;
+      --bordure:rgba(239,234,224,.16); --piste:rgba(239,234,224,.10);
+      --pill-fait:#25392B; --pill-cours:#3A3220; --pill-lancer:#26302A; --pill-vert:#3E2A22; --pill-bloque:#3A2530;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fond:#121B14; --surface:#1B2A1F; --surface-alt:#17241B;
+    --texte:#EFEAE0; --texte-doux:#B9C4B6;
+    --accent:#8FBF9A; --accent-fort:#C3D6B0;
+    --cta:#F0714F; --attente:#E5B45E; --fait:#8FBF9A; --bloque:#E08BA2;
+    --bordure:rgba(239,234,224,.16); --piste:rgba(239,234,224,.10);
+    --pill-fait:#25392B; --pill-cours:#3A3220; --pill-lancer:#26302A; --pill-vert:#3E2A22; --pill-bloque:#3A2530;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fond);color:var(--texte);font-family:"Outfit",system-ui,sans-serif;line-height:1.55;font-size:16px}
+  .page{max-width:960px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-bottom:6px}
+  .marque{font-family:"Fraunces",Georgia,serif;font-weight:720;font-size:1.9rem;letter-spacing:.01em}
+  .marque em{font-style:normal;color:var(--accent)}
+  .maj{margin-left:auto;font-size:.8rem;color:var(--texte-doux)}
+  .soustitre{color:var(--texte-doux);margin:0 0 22px;font-size:.95rem}
+  .soustitre b{color:var(--texte)}
+  /* filtres personnes */
+  .filtres{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .chip{border:1px solid var(--bordure);background:var(--surface);color:var(--texte);border-radius:999px;padding:7px 15px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .06s}
+  .chip:hover{transform:translateY(-1px)}
+  .chip[aria-pressed="true"]{background:var(--accent-fort);border-color:var(--accent-fort);color:var(--fond)}
+  .chip:focus-visible{outline:2px solid var(--cta);outline-offset:2px}
+  /* bandeau perso */
+  .perso-note{display:none;background:var(--surface);border:1px solid var(--bordure);border-left:4px solid var(--accent);border-radius:10px;padding:14px 18px;margin:0 0 22px;font-size:.95rem}
+  .perso-note.on{display:block}
+  /* compteurs */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 26px}
+  .stat{background:var(--surface);border:1px solid var(--bordure);border-radius:12px;padding:12px 14px}
+  .stat .n{font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1.1}
+  .stat .l{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--texte-doux);margin-top:2px}
+  .stat.a-valider .n{color:var(--cta)}
+  .stat.bloques .n{color:var(--bloque)}
+  .stat.faits .n{color:var(--fait)}
+  h2{font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:1.3rem;margin:34px 0 6px;text-wrap:balance}
+  h2 .badge{display:inline-block;vertical-align:3px;margin-left:8px;background:var(--cta);color:#FFF8F2;border-radius:999px;font-family:"Outfit";font-size:.72rem;font-weight:700;padding:2px 9px;letter-spacing:.04em}
+  .intro{color:var(--texte-doux);font-size:.92rem;margin:0 0 14px}
+  /* décisions */
+  .decisions{display:grid;gap:10px}
+  .decision{display:grid;grid-template-columns:26px 1fr;gap:12px;background:var(--surface);border:1px solid var(--bordure);border-radius:12px;padding:13px 16px}
+  .decision .num{font-family:"Fraunces",Georgia,serif;font-weight:650;color:var(--cta);font-size:1.05rem;text-align:right}
+  .decision p{margin:0;font-size:.95rem}
+  .decision .debloque{display:block;margin-top:3px;font-size:.83rem;color:var(--texte-doux)}
+  .decision .debloque::before{content:"→ ";color:var(--accent)}
+  /* bloquants */
+  .bloquants{display:grid;gap:8px}
+  .bloquant{display:flex;gap:10px;align-items:baseline;background:var(--surface);border:1px dashed var(--bordure);border-radius:10px;padding:10px 14px;font-size:.93rem}
+  .bloquant .qui{margin-left:auto;flex-shrink:0;font-size:.78rem;font-weight:700;color:var(--bloque)}
+  /* phases */
+  .phase{margin:26px 0 0;background:var(--surface);border:1px solid var(--bordure);border-radius:14px;overflow:hidden}
+  .phase-tete{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:14px 18px;background:var(--surface-alt)}
+  .phase-tete h3{margin:0;font-family:"Fraunces",Georgia,serif;font-weight:650;font-size:1.05rem}
+  .phase-tete .quand{font-size:.82rem;color:var(--texte-doux)}
+  .jauge{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--texte-doux)}
+  .jauge .barre{width:90px;height:6px;border-radius:3px;background:var(--piste);overflow:hidden}
+  .jauge .barre i{display:block;height:100%;background:var(--fait)}
+  ul.actions{list-style:none;margin:0;padding:6px 0}
+  .action{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:9px 18px;border-top:1px solid var(--piste);font-size:.94rem}
+  .action:first-child{border-top:none}
+  .action.off{display:none}
+  .action .t b{font-weight:700}
+  .pill{flex-shrink:0;font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .p-fait{background:var(--pill-fait);color:var(--fait)}
+  .p-cours{background:var(--pill-cours);color:var(--attente)}
+  .p-lancer{background:var(--pill-lancer);color:var(--texte-doux)}
+  .p-vert{background:var(--pill-vert);color:var(--cta)}
+  .p-bloque{background:var(--pill-bloque);color:var(--bloque)}
+  .qui-tags{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+  .qtag{font-size:.7rem;font-weight:600;color:var(--texte-doux);border:1px solid var(--bordure);border-radius:999px;padding:2px 8px}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--bordure);font-size:.82rem;color:var(--texte-doux)}
+  @media (max-width:560px){ .maj{margin-left:0} .jauge{margin-left:0} .qui-tags{margin-left:0} }
+  @media (prefers-reduced-motion: reduce){ .chip{transition:none} }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="marque">Croc <em>Parc</em> · Pilotage</div>
+    <div class="maj">Mis à jour le <b>25 août 2026</b> — phase <b>1 / 5</b></div>
+  </header>
+  <p class="soustitre">Mission <b>communication · événementiel · digital</b> — suivi en continu par <b>Jonathan</b>. Cliquez sur votre prénom pour voir <b>ce qui vous concerne</b>.</p>
+
+  <div class="filtres" role="group" aria-label="Filtrer par personne">
+    <button class="chip" aria-pressed="true"  data-p="tous">Vue d'ensemble</button>
+    <button class="chip" aria-pressed="false" data-p="julien">Julien</button>
+    <button class="chip" aria-pressed="false" data-p="babeth">Babeth</button>
+    <button class="chip" aria-pressed="false" data-p="brice">Brice</button>
+    <button class="chip" aria-pressed="false" data-p="florence">Florence</button>
+    <button class="chip" aria-pressed="false" data-p="jonathan">Jonathan</button>
+  </div>
+
+  <div class="perso-note" id="note-julien"><b>Julien</b> — 4 choses à nous transmettre (voir « En attente »), 7 décisions à valider avec Babeth ci-dessous. Le reste avance sans vous mobiliser : ce tableau reste à jour en permanence.</div>
+  <div class="perso-note" id="note-babeth"><b>Babeth</b> — l'action clé : la <b>relance mairie</b> (courrier prêt à signer). Chaque outil lancé (billetterie, pré-vente, newsletter) vient <b>alléger votre quotidien</b> factures/devis.</div>
+  <div class="perso-note" id="note-brice"><b>Brice</b> — rien à créer : on vous livre des <b>kits prêts à l'emploi</b> (ticket combiné 5 €, trames SMS, fiches prospects BTP du vendredi). Objectif : <b>30-40 couverts/jour</b>.</div>
+  <div class="perso-note" id="note-florence"><b>Florence</b> — on finalise ensemble le <b>support groupes</b> et le <b>Petit Botaniste</b>, puis on vous équipe pour la <b>prospection des jours creux</b>. Point à faire : l'accès à la <b>messagerie Orange</b>.</div>
+  <div class="perso-note" id="note-jonathan"><b>Jonathan</b> — pilote. Priorité n°1 : <b>vacances d'octobre</b>. Toute communication sortante passe par votre <b>relecture</b>.</div>
+
+  <div class="stats" id="stats"></div>
+
+  <h2>Décisions attendues <span class="badge">7 feux verts</span></h2>
+  <p class="intro">Un « oui » = une action <b>déjà préparée</b> qui démarre aussitôt. Décideurs : <b>Julien &amp; Babeth</b>.</p>
+  <div class="decisions">
+    <div class="decision"><div class="num">1</div><p><b>Pistes de logo &amp; charte</b> — valider 1 direction parmi 3-5 propositions (esprit épuré/premium).<span class="debloque">débloque la signalétique, les affiches, la carte du parc</span></p></div>
+    <div class="decision"><div class="num">2</div><p><b>Billetterie en ligne</b> — valider l'outil recommandé (comparatif chiffré fourni).<span class="debloque">débloque le scan à l'entrée + la capture email/tél systématique</span></p></div>
+    <div class="decision"><div class="num">3</div><p><b>Budget pub réseaux</b> — accord de principe : boosts de 5 à 20 € sur les temps forts (≈ 100-150 €/mois max).<span class="debloque">débloque la portée toute l'île pour les vacances d'octobre</span></p></div>
+    <div class="decision"><div class="num">4</div><p><b>« Machine à emails »</b> — jeu roue + QR code sur place, petit lot (boisson/snack), conforme RGPD.<span class="debloque">débloque la collecte de contacts qualifiés dès octobre</span></p></div>
+    <div class="decision"><div class="num">5</div><p><b>Influenceurs famille</b> — inviter 2-3 créateurs locaux (entrées offertes) pendant les vacances.<span class="debloque">débloque une visibilité authentique auprès des familles de toute l'île</span></p></div>
+    <div class="decision"><div class="num">6</div><p><b>Bal la poussière test</b> — un après-midi Gramoun (orchestre, scène, restaurant) sur un jour creux de novembre.<span class="debloque">débloque la validation du concept avant d'en faire un rendez-vous régulier</span></p></div>
+    <div class="decision"><div class="num">7</div><p><b>Courrier de relance mairie</b> — texte prêt, signature Babeth.<span class="debloque">débloque la convention, puis le salon horticole et la catégorie ERP 2</span></p></div>
+  </div>
+
+  <h2>En attente de l'équipe</h2>
+  <div class="bloquants">
+    <div class="bloquant"><span><b>Plans d'architecte</b> du parc au 1/1000e (PDF + DWG) — pour refaire la carte</span><span class="qui">Julien</span></div>
+    <div class="bloquant"><span><b>Référence du site « esprit premium »</b> évoquée en réunion — pour cadrer la charte</span><span class="qui">Julien</span></div>
+    <div class="bloquant"><span><b>Dossier / contact de l'étude solaire</b> — pour relancer l'installateur</span><span class="qui">Julien</span></div>
+    <div class="bloquant"><span><b>Liste des ~30 journées mondiales UNESCO</b> dégrossie — pour le calendrier 2027</span><span class="qui">Julien</span></div>
+    <div class="bloquant"><span><b>Accès messagerie Orange</b> — bloque le travail emails de Florence</span><span class="qui">Florence</span></div>
+    <div class="bloquant"><span><b>Accès base emails Orizon Réunion</b> — pour construire la newsletter</span><span class="qui">Babeth</span></div>
+  </div>
+
+  <h2 id="titre-plan">Le plan, phase par phase</h2>
+  <p class="intro">31 actions de <b>fin août à décembre</b>. Statuts mis à jour à chaque session de travail.</p>
+  <div id="phases"></div>
+
+  <footer>
+    Tableau de bord tenu par <b>Jonathan</b> avec l'agence Claude — document de travail interne Croc Parc.
+    Fondé sur le compte-rendu de réunion du 25/08/2026 (Julien · Babeth · Jonathan).
+  </footer>
+</div>
+
+<script>
+const STATUTS = {
+  fait:   {cl:"p-fait",   txt:"✓ fait"},
+  cours:  {cl:"p-cours",  txt:"en cours"},
+  lancer: {cl:"p-lancer", txt:"à lancer"},
+  vert:   {cl:"p-vert",   txt:"attend feu vert"},
+  bloque: {cl:"p-bloque", txt:"bloqué"}
+};
+const PHASES = [
+  {titre:"Phase 1 — Fondations & quick wins", quand:"fin août → mi-sept.", actions:[
+    {t:"<b>Affiche + programme</b> des animations <b>vacances d'octobre</b>", s:"cours", p:["jonathan","babeth"]},
+    {t:"<b>Relance convention mairie</b> — courrier prêt à signer", s:"vert", p:["babeth","jonathan"]},
+    {t:"<b>Relance étude solaire</b> (dès réception du contact)", s:"bloque", p:["julien","jonathan"]},
+    {t:"<b>3-5 pistes logo + charte</b> (épuré / premium)", s:"cours", p:["julien","babeth","jonathan"]},
+    {t:"<b>Calendrier éditorial</b> Instagram / Facebook sept-oct (3 posts/sem.)", s:"cours", p:["jonathan"]},
+    {t:"<b>Choix billetterie en ligne</b> — comparatif → recommandation", s:"vert", p:["julien","babeth","jonathan"]},
+    {t:"<b>Support d'accueil groupes</b> finalisé (base Florence)", s:"cours", p:["florence","jonathan"]},
+    {t:"<b>Couverture des gonflables</b> : solutions chiffrées, dont <b>ombrière solaire 2-en-1</b>", s:"cours", p:["julien","jonathan"]}
+  ]},
+  {titre:"Phase 2 — Production & lancements", quand:"mi-sept. → fin sept.", actions:[
+    {t:"<b>Billetterie en ligne opérationnelle</b> + page réservation restaurant", s:"vert", p:["jonathan","babeth"]},
+    {t:"<b>Newsletter</b> : structure + segmentation (écoles / CE / familles / particuliers)", s:"bloque", p:["florence","jonathan"]},
+    {t:"<b>Machine à emails</b> (roue + QR code) prête pour les vacances", s:"vert", p:["jonathan"]},
+    {t:"<b>Kit prospection Florence</b> : scripts d'appel + trames mail", s:"lancer", p:["florence"]},
+    {t:"<b>Kit restaurant Brice</b> : ticket combiné 5 € + trames SMS + cibles BTP", s:"lancer", p:["brice"]},
+    {t:"<b>Tournage drone n°1</b> → banque d'images (parc, animaux, scène)", s:"lancer", p:["jonathan"]},
+    {t:"<b>Audit SEO / GEO</b> du site + plan de blog (12 articles)", s:"cours", p:["jonathan"]},
+    {t:"<b>Carte du parc</b> : reprise dès réception des plans", s:"bloque", p:["julien","jonathan"]}
+  ]},
+  {titre:"Phase 3 — Vacances d'octobre : le démonstrateur", quand:"octobre", actions:[
+    {t:"<b>Animations quotidiennes</b> + couverture stories / reels intensive", s:"lancer", p:["jonathan","florence"]},
+    {t:"<b>Boosts 5-20 €</b> sur les temps forts, ciblage toute l'île", s:"vert", p:["jonathan"]},
+    {t:"<b>2-3 influenceurs famille</b> invités au parc", s:"vert", p:["jonathan"]},
+    {t:"<b>Machine à emails active</b> sur site → premiers contacts qualifiés", s:"lancer", p:["jonathan","florence"]},
+    {t:"<b>Bilan chiffré</b> : fréquentation, portée, emails collectés", s:"lancer", p:["jonathan","julien"]}
+  ]},
+  {titre:"Phase 4 — Pré-décembre commercial", quand:"novembre", actions:[
+    {t:"<b>Campagne CE / groupes pour décembre</b> (mailing segmenté + relances)", s:"lancer", p:["florence","jonathan"]},
+    {t:"<b>Offre « journée cohésion » entreprise</b> packagée + prospection BTP", s:"lancer", p:["brice","jonathan"]},
+    {t:"<b>Calendrier événementiel 2027</b> (journées UNESCO, ~1 évt / 15 jours)", s:"bloque", p:["julien","jonathan"]},
+    {t:"<b>Dossier salon horticole</b> : concept, budget, plan exposants", s:"lancer", p:["julien","babeth","jonathan"]},
+    {t:"<b>1er bal la poussière</b> Gramoun (test un jour creux)", s:"vert", p:["babeth","brice","jonathan"]},
+    {t:"<b>Logo / charte finalisés</b> + signalétique chiffrée", s:"lancer", p:["julien","babeth","jonathan"]}
+  ]},
+  {titre:"Phase 5 — Retour de Julien", quand:"décembre", actions:[
+    {t:"<b>Point budget + bilan mission</b> (chiffres des phases 1-4)", s:"lancer", p:["julien","babeth","jonathan"]},
+    {t:"<b>Dossier salon mairie lancé</b> (instruction 6 mois → salon mi-2027)", s:"lancer", p:["julien","babeth"]},
+    {t:"<b>Dossier catégorie ERP 2</b> engagé (jauge 614 → 1 500)", s:"lancer", p:["julien"]},
+    {t:"<b>Décembre plein</b> : CE / groupes + animations de fêtes", s:"lancer", p:["brice","florence","babeth","jonathan"]}
+  ]}
+];
+const NOMS = {julien:"Julien",babeth:"Babeth",brice:"Brice",florence:"Florence",jonathan:"Jonathan"};
+
+function rendre(){
+  const cont = document.getElementById("phases");
+  cont.innerHTML = "";
+  PHASES.forEach(ph=>{
+    const faits = ph.actions.filter(a=>a.s==="fait").length;
+    const enCours = ph.actions.filter(a=>a.s==="cours").length;
+    const pct = Math.round(100*(faits + enCours*0.4)/ph.actions.length);
+    const sec = document.createElement("section");
+    sec.className = "phase";
+    sec.innerHTML = `<div class="phase-tete"><h3>${ph.titre}</h3><span class="quand">${ph.quand}</span>
+      <span class="jauge"><span class="barre"><i style="width:${pct}%"></i></span>${faits}/${ph.actions.length} faites</span></div>
+      <ul class="actions">${ph.actions.map(a=>`
+        <li class="action" data-p="${a.p.join(" ")}">
+          <span class="pill ${STATUTS[a.s].cl}">${STATUTS[a.s].txt}</span>
+          <span class="t">${a.t}</span>
+          <span class="qui-tags">${a.p.map(x=>`<span class="qtag">${NOMS[x]}</span>`).join("")}</span>
+        </li>`).join("")}</ul>`;
+    cont.appendChild(sec);
+  });
+  const tous = PHASES.flatMap(p=>p.actions);
+  const c = s => tous.filter(a=>a.s===s).length;
+  document.getElementById("stats").innerHTML = `
+    <div class="stat faits"><div class="n">${c("fait")}</div><div class="l">faites</div></div>
+    <div class="stat"><div class="n">${c("cours")}</div><div class="l">en cours</div></div>
+    <div class="stat"><div class="n">${c("lancer")}</div><div class="l">à lancer</div></div>
+    <div class="stat a-valider"><div class="n">7</div><div class="l">décisions attendues</div></div>
+    <div class="stat bloques"><div class="n">${c("bloque")}</div><div class="l">bloquées</div></div>`;
+}
+function filtrer(p){
+  document.querySelectorAll(".chip").forEach(ch=>ch.setAttribute("aria-pressed", String(ch.dataset.p===p)));
+  document.querySelectorAll(".action").forEach(li=>{
+    li.classList.toggle("off", p!=="tous" && !li.dataset.p.split(" ").includes(p));
+  });
+  document.querySelectorAll(".perso-note").forEach(n=>n.classList.remove("on"));
+  if(p!=="tous"){ const n=document.getElementById("note-"+p); if(n) n.classList.add("on"); }
+  try{ localStorage.setItem("cp-filtre", p); }catch(e){}
+}
+document.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>filtrer(ch.dataset.p)));
+rendre();
+let memo="tous"; try{ memo = localStorage.getItem("cp-filtre")||"tous"; }catch(e){}
+filtrer(memo);
+</script>
