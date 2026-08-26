@@ -75,3 +75,5 @@ L'agence est le dispositif de travail de **Jonathan**, en mission **communicatio
 - **Brouillon Gmail** pour Julien & Babeth (draft id r-928513442864249811) — ⚠️ destinataires à compléter + **joindre le PDF** avant envoi ; jamais d'envoi sans relecture
 - **3 études marché sourcées** + **analyse senior** : `agence/references/2026-08-25-*.md`
 - **Plan d'action maître** : `agence/plan-action.md`
+- **Livrables opérationnels v1** (26/08, brouillons à valider) : courrier relance mairie · kit prospection Florence · kit restaurant Brice (« Pause Croco », BTP, journée cohésion) · calendrier éditorial IG/FB 8 semaines · plan influenceurs octobre · brief DA 4 directions (Canopée, Écusson, Marmaille, Herbier) · audit SEO/GEO + plan de blog 12 articles — tout dans `agence/livrables/2026-08-cadrage/`
+- ⚠️ Constats site (audit) : **aucun H1, aucune meta description** (Yoast installé mais sous-exploité) ; FAQPage déjà balisée ✅ ; page fantôme `/teste` indexée ; email wanadoo incohérent sur /vos-evenements ; **croc-parc.re bloqué par le proxy de session (passer par Firecrawl)** ; Lighthouse à refaire en septembre (quota outil)

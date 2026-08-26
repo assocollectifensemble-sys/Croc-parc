@@ -12,7 +12,7 @@
 | 1.2 | **Relance convention mairie** (courrier prêt à envoyer, Babeth signe) | Plume → Babeth | ⏳ |
 | 1.3 | **Relance dossier étude solaire** (dès réception du contact) | Jonathan | ⛔ contact manquant |
 | 1.4 | **3-5 pistes logo + charte** (esprit épuré/premium) via Claude Design | Studio | 🔄 |
-| 1.5 | **Calendrier éditorial IG/FB sept-oct** (3 posts/sem. + reels) | Social-media | 🔄 |
+| 1.5 | **Calendrier éditorial IG/FB sept-oct** (3 posts/sem. + reels) | Social-media | ✅ v1 livrée |
 | 1.6 | **Choix billetterie en ligne** (comparatif → recommandation → test) | Digital | 🔒 feu vert outil |
 | 1.7 | **Support d'accueil groupes finalisé** (base Florence) | Plume + Florence | 🔄 |
 | 1.8 | **Couverture gonflables** : solutions chiffrées (dont ombrière solaire 2-en-1) | Veille + Jonathan | 🔄 urgent |
@@ -24,10 +24,10 @@
 | 2.1 | **Billetterie en ligne opérationnelle** (+ page réservation restaurant) | Digital | 🔒 après 1.6 |
 | 2.2 | **Newsletter** : structure + segmentation (écoles/CE/familles/particuliers) | Digital | ⛔ accès base Orizon + messagerie Orange |
 | 2.3 | **Machine à emails** (roue + QR code, RGPD-clean) prête pour les vacances | Digital | 🔒 |
-| 2.4 | **Kit prospection Florence** : scripts d'appel + trames mail (écoles, CE) | Plume | ⏳ |
-| 2.5 | **Kit restaurant Brice** : ticket combiné 5 € formalisé + trame SMS + cible BTP vendredi | Plume | ⏳ |
+| 2.4 | **Kit prospection Florence** : scripts d'appel + trames mail (écoles, CE) | Plume | ✅ v1 livrée |
+| 2.5 | **Kit restaurant Brice** : « Pause Croco » + trames SMS + cible BTP vendredi | Plume | ✅ v1 livrée |
 | 2.6 | **Tournage drone n°1** (parc, animaux, scène) → banque d'images | Social-media | ⏳ |
-| 2.7 | **Audit SEO/GEO du site + plan de blog** (12 articles) | Digital | 🔄 |
+| 2.7 | **Audit SEO/GEO du site + plan de blog** (12 articles) | Digital | ✅ v1 livrée |
 | 2.8 | **Carte du parc** : reprise dès réception des plans | Studio | ⛔ plans architecte |
 
 ### Phase 3 — Vacances d'octobre = démonstrateur (oct.)
