@@ -1,7 +1,7 @@
 # Mémoire globale de l'agence Croc Parc
 
 > **Document vivant** — mis à jour à chaque session. Source fondatrice : [compte-rendu de réunion du 25/08/2026](references/2026-08-25-compte-rendu-reunion.md).
-> Dernière mise à jour : **2026-08-25** (session fondatrice).
+> Dernière mise à jour : **2026-08-26** (session fondatrice, travail de nuit).
 
 ## Qui nous sommes
 L'agence est le dispositif de travail de **Jonathan**, en mission **communication / événementiel / digital** pour **Croc Parc** (Étang-Salé, La Réunion) pendant **3 mois**, avec l'appui d'agents Claude spécialisés (voir `.claude/agents/`).
@@ -55,7 +55,23 @@ L'agence est le dispositif de travail de **Jonathan**, en mission **communicatio
 - 2026-08-25 — Livrables **concis, gras pour lecture en diagonale, visuels, interactifs**, accès par personne.
 - 2026-08-25 — L'agence vit dans ce repo Git ; mémoire globale + mémoires par agent + journal de session.
 
+## Faits marché clés (sourcés — détail dans `references/2026-08-25-etude-*.md`)
+- **Vacances scolaires officielles** : octobre = **10 → 26/10/2026** (chevauche le **pic touristique annuel**) ; été austral = **19/12/2026 → 01/02/2027**.
+- Tourisme : **556 534 visiteurs 2024 (record)** ; affinitaire 1er motif ; **1 touriste sur 5 = diaspora réunionnaise** ; clientèle locale en berne (campagne CRT « mode péi »).
+- **Prix** : Croc Parc 15 € tarif unique dès 3 ans → **panier famille 60 € vs 26-34 € chez les concurrents** ; Tripadvisor 2,5/5, grief n°1 « prix » ; MAIS animations/anniversaires plébiscités. → sujet tarif famille ouvert avec les dirigeants (simulation à préparer).
+- **Gramoun** : 181 000 seniors 60+ (21 %) ; Salon des Seniors 27 300 visiteurs ; thés dansants existants = municipaux gratuits → offre commerciale à inventer, **vente B2B aux CCAS/clubs**.
+- **Scène** : le Sud est sous-équipé (plus grandes salles au Nord/Ouest ; Théâtre des Sables 304 assis = complémentaire).
+- **Solaire** : arrêté S24 ZNI couvre les **ombrières** → ombrière PV sur gonflables = ombre + prod (prime EDF SEI ; surplus quasi non rémunéré → autoconsommation). Pas de défiscalisation PV outre-mer ; guichet Région « ÉcoPositive » à solliciter.
+- **Sono** : en ERP type PA, une **alarme d'évacuation audible partout est exigée** → la sono multi-zones 100 V est un chantier réglementaire, pas un confort.
+- **RGPD** : base Orizon **non émailable directement** (voie licite : Orizon écrit à ses contacts avec lien d'inscription volontaire) ; jeu-roue = opt-in séparé non pré-coché.
+- **Billetterie** : Billetweb (0,29 € + 1 %) ou Weezevent (0,99 €/billet, caisse+CRM) ; newsletter : **Brevo**. Journées cohésion : marché à **135-200 €/pers**.
+- **Drone** : pas de survol du public (DGAC) → tournages hors ouverture.
+
 ## Actifs produits
 - Site restaurant **Le Maï-Taï** : `maitai/` (déployé via GitHub Pages)
 - Skill **supermonteur** (sous-titrage reels 9:16) : `.claude/skills/supermonteur/`
-- (Session 2026-08-25, en cours) Document de cadrage PDF + tableau de bord web + brouillon Gmail
+- **Tableau de bord web** (à republier à chaque session) : https://claude.ai/code/artifact/3d532d88-d3c3-46de-9446-7021efeb243a — source `agence/tableau-de-bord.html`
+- **Document de cadrage** « Cap sur les 3 prochains mois » : `agence/livrables/2026-08-cadrage/` (HTML source + PDF 5 pages)
+- **Brouillon Gmail** pour Julien & Babeth (draft id r-928513442864249811) — ⚠️ destinataires à compléter + **joindre le PDF** avant envoi ; jamais d'envoi sans relecture
+- **3 études marché sourcées** + **analyse senior** : `agence/references/2026-08-25-*.md`
+- **Plan d'action maître** : `agence/plan-action.md`

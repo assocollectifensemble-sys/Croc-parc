@@ -1,20 +1,22 @@
 # Plan d'action Croc Parc — sept. → déc. 2026
 > **Document maître**, mis à jour à chaque session. Version : 2026-08-25 (v1, à valider par Julien & Babeth).
 > Légende statut : ✅ fait · 🔄 en cours · ⏳ à lancer · 🔒 attend un feu vert · ⛔ bloqué (dépendance)
+> Ajout séance du 26/08 : action 1.9 — **dossier pédagogique écoles avant fin septembre** (les sorties scolaires se décident en début d'année).
 
 ## Vue chronologique
 
 ### Phase 1 — Fondations & quick wins (fin août → mi-sept.)
 | # | Action | Qui | Statut |
 |---|---|---|---|
-| 1.1 | **Affiche + programme animations vacances d'octobre** (à caler puis communiquer) | Jonathan + studio | ⏳ priorité n°1 |
+| 1.1 | **Affiche + programme animations vacances d'octobre** (10→26/10, pic touristique) | Jonathan + studio | 🔄 priorité n°1 |
 | 1.2 | **Relance convention mairie** (courrier prêt à envoyer, Babeth signe) | Plume → Babeth | ⏳ |
 | 1.3 | **Relance dossier étude solaire** (dès réception du contact) | Jonathan | ⛔ contact manquant |
-| 1.4 | **3-5 pistes logo + charte** (esprit épuré/premium) via Claude Design | Studio | ⏳ |
-| 1.5 | **Calendrier éditorial IG/FB sept-oct** (3 posts/sem. + reels) | Social-media | ⏳ |
+| 1.4 | **3-5 pistes logo + charte** (esprit épuré/premium) via Claude Design | Studio | 🔄 |
+| 1.5 | **Calendrier éditorial IG/FB sept-oct** (3 posts/sem. + reels) | Social-media | 🔄 |
 | 1.6 | **Choix billetterie en ligne** (comparatif → recommandation → test) | Digital | 🔒 feu vert outil |
-| 1.7 | **Support d'accueil groupes finalisé** (base Florence) | Plume + Florence | ⏳ |
-| 1.8 | **Couverture gonflables** : solutions chiffrées (dont ombrière solaire 2-en-1) | Veille + Jonathan | ⏳ urgent |
+| 1.7 | **Support d'accueil groupes finalisé** (base Florence) | Plume + Florence | 🔄 |
+| 1.8 | **Couverture gonflables** : solutions chiffrées (dont ombrière solaire 2-en-1) | Veille + Jonathan | 🔄 urgent |
+| 1.9 | **Dossier pédagogique écoles** (Petit Botaniste + EDD) envoyé avant fin sept. | Plume + Florence | ⏳ |
 
 ### Phase 2 — Production & lancements (mi-sept. → fin sept.)
 | # | Action | Qui | Statut |
@@ -25,7 +27,7 @@
 | 2.4 | **Kit prospection Florence** : scripts d'appel + trames mail (écoles, CE) | Plume | ⏳ |
 | 2.5 | **Kit restaurant Brice** : ticket combiné 5 € formalisé + trame SMS + cible BTP vendredi | Plume | ⏳ |
 | 2.6 | **Tournage drone n°1** (parc, animaux, scène) → banque d'images | Social-media | ⏳ |
-| 2.7 | **Audit SEO/GEO du site + plan de blog** (12 articles) | Digital | ⏳ |
+| 2.7 | **Audit SEO/GEO du site + plan de blog** (12 articles) | Digital | 🔄 |
 | 2.8 | **Carte du parc** : reprise dès réception des plans | Studio | ⛔ plans architecte |
 
 ### Phase 3 — Vacances d'octobre = démonstrateur (oct.)
