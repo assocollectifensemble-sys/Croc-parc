@@ -6,26 +6,28 @@
 
 const CP_LOGOS = {
 
-  /* ── 0 · LOGO RETENU (image détourée, fond transparent) ── */
-  officiel: {
-    nom: "Le Retenu",
-    desc: "Mascotte premium détourée — le logo validé",
+  /* ── 0 · LOGO RETENU — fond vert forêt ────────────────── */
+  officielVert: {
+    nom: "Le Retenu · vert",
+    desc: "Mascotte premium, médaillon vert forêt — passe sur tous les fonds",
     ratio: 0.98,
-    raster: "img/crocparc-logo.png",
-    svg: `<svg viewBox="0 0 848 868" xmlns="http://www.w3.org/2000/svg" aria-label="Croc Parc &amp; Cie">
-      <image href="img/crocparc-logo.png" x="0" y="0" width="848" height="868"/>
-    </svg>`
+    raster: "img/crocparc-logo-vert.png"
   },
 
-  /* ── 0b · VARIANTE TROPICALE ─────────────────────────── */
+  /* ── 0b · LOGO RETENU — fond ardoise d'origine ────────── */
+  officiel: {
+    nom: "Le Retenu · ardoise",
+    desc: "Version d'origine, médaillon ardoise — idéal sur fond sombre",
+    ratio: 0.98,
+    raster: "img/crocparc-logo.png"
+  },
+
+  /* ── 0c · VARIANTE TROPICALE ──────────────────────────── */
   officielTropical: {
     nom: "Le Tropical",
     desc: "Variante jungle et orchidées — bras ouverts",
     ratio: 1.02,
-    raster: "img/crocparc-logo-kraft.png",
-    svg: `<svg viewBox="0 0 954 931" xmlns="http://www.w3.org/2000/svg" aria-label="Croc Parc &amp; Cie">
-      <image href="img/crocparc-logo-kraft.png" x="0" y="0" width="954" height="931"/>
-    </svg>`
+    raster: "img/crocparc-logo-kraft.png"
   },
 
   /* ── 1 · L'ÉCUSSON ─────────────────────────────────────── */
@@ -187,11 +189,11 @@ const CP_LOGOS = {
 };
 
 /* Logo conseillé par défaut pour chaque univers */
-const CP_LOGO_DEFAUT = { a: "officiel", b: "officiel", c: "officiel" };
+const CP_LOGO_DEFAUT = { a: "officiel", b: "officielVert", c: "officielVert" };
 
 /* Pourquoi ce logo va bien avec cet univers */
 const CP_LOGO_ACCORD = {
-  a: { officiel: "le logo retenu", officielTropical: "variante plus riche", oeil: "sobre, très premium", cachet: "sobre en or sur noir", crete: "épuré, tient bien" },
-  b: { officiel: "le logo retenu", officielTropical: "variante plus riche", ecusson: "l'esprit blason", cachet: "l'esprit tampon créole", sourire: "chaleureux, ça marche" },
-  c: { officiel: "le logo retenu", officielTropical: "variante plus riche", ligne: "net et moderne", crete: "net et lisible partout", sourire: "familial, ça marche" }
+  a: { officiel: "l'accord naturel sur noir", officielVert: "le passe-partout", officielTropical: "variante plus riche", oeil: "sobre, très premium", cachet: "sobre en or sur noir", crete: "épuré, tient bien" },
+  b: { officielVert: "l'accord naturel", officiel: "aussi possible", officielTropical: "variante plus riche", ecusson: "l'esprit blason", cachet: "l'esprit tampon créole", sourire: "chaleureux, ça marche" },
+  c: { officielVert: "l'accord naturel", officiel: "aussi possible", officielTropical: "variante plus riche", ligne: "net et moderne", crete: "net et lisible partout", sourire: "familial, ça marche" }
 };

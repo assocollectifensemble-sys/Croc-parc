@@ -5,3 +5,6 @@ RDV/
 shots/
 *.tmp
 _check-*.png
+
+# Secrets Cloudflare
+.dev.vars
