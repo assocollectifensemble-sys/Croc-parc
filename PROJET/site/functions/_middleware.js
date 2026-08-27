@@ -69,7 +69,7 @@ function pageConnexion(erreur) {
 </head>
 <body>
   <div class="box">
-    <img src="/img/crocparc-logo.png" alt="Croc Parc &amp; Cie">
+    <img src="/img/crocparc-logo-v3.png" alt="Croc Parc &amp; Cie">
     <h1>Acces reserve</h1>
     <p class="sub">Presentation de la charte graphique et des pistes de logo.</p>
     <form method="POST">
@@ -118,7 +118,7 @@ export async function onRequest(context) {
 
   // Le logo et la favicon de la page de connexion doivent rester accessibles.
   const chemin = new URL(request.url).pathname;
-  if (chemin.startsWith("/img/favicon") || chemin === "/img/crocparc-logo.png") {
+  if (chemin.startsWith("/img/favicon") || chemin === "/img/crocparc-logo-v3.png") {
     return next();
   }
 
