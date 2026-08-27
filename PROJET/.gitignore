@@ -1,0 +1,7 @@
+# Enregistrements et transcriptions de réunions — CONFIDENTIEL, dépôt public
+RDV/
+
+# Fichiers de travail lourds
+shots/
+*.tmp
+_check-*.png

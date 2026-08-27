@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="a">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Croc Parc — 3 univers de charte graphique</title>
+<meta name="description" content="Trois directions de charte graphique pour Croc Parc, appliquées à la vraie page d'accueil.">
+<link rel="icon" href="img/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Alfa+Slab+One&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Outfit:wght@300;400;500;600;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   LES TROIS UNIVERS — tout tient dans ces variables
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── A · NOIR PREMIUM & OR ── */
+[data-theme="a"]{
+  --bg:#0A0A0A; --bg2:#141414; --surf:#F6F1E6; --ink:#F6F1E6; --ink-dk:#111111;
+  --mut:#9A958A; --acc:#C9A227; --acc2:#8C7A3F; --line:rgba(246,241,230,.14);
+  --line-dk:rgba(17,17,17,.14);
+  --ft:'Cormorant Garamond',serif; --fb:'Jost',sans-serif;
+  --h1:clamp(38px,6.2vw,76px); --h1w:500; --h1ls:-.01em; --h1lh:1.04;
+  --h2:clamp(28px,4.2vw,46px); --h2w:500; --h2ls:0;
+  --rad:0px; --btnrad:0px; --imgrad:0px;
+  --kick-ls:.30em; --kick-w:500; --kick-tt:uppercase; --kick-fs:11px;
+  --body-fs:16px; --body-lh:1.75;
+  --img-filter:grayscale(.25) contrast(1.06) brightness(.96);
+  --overlay:linear-gradient(0deg,rgba(10,10,10,.94) 4%,rgba(10,10,10,.35) 55%,rgba(10,10,10,.6));
+  --card-bg:#141414; --card-ink:#F6F1E6;
+  --sep:1px solid var(--line);
+}
+/* ── B · LONTAN ── */
+[data-theme="b"]{
+  --bg:#F4E9D7; --bg2:#EADCC4; --surf:#1F3D2B; --ink:#1F3D2B; --ink-dk:#1F3D2B;
+  --mut:#7A6A52; --acc:#B23A2E; --acc2:#E8B33C; --line:rgba(31,61,43,.16);
+  --line-dk:rgba(31,61,43,.16);
+  --ft:'Alfa Slab One',serif; --fb:'Source Serif 4',serif;
+  --h1:clamp(32px,5.4vw,62px); --h1w:400; --h1ls:0; --h1lh:1.06;
+  --h2:clamp(24px,3.6vw,40px); --h2w:400; --h2ls:0;
+  --rad:3px; --btnrad:3px; --imgrad:3px;
+  --kick-ls:.06em; --kick-w:600; --kick-tt:none; --kick-fs:16px;
+  --body-fs:17px; --body-lh:1.7;
+  --img-filter:sepia(.16) saturate(1.16) contrast(1.03);
+  --overlay:linear-gradient(0deg,rgba(31,61,43,.93) 4%,rgba(31,61,43,.32) 58%,rgba(31,61,43,.5));
+  --card-bg:#FFFFFF; --card-ink:#1F3D2B;
+  --sep:1px solid var(--line);
+}
+/* ── C · GRAND AIR ── */
+[data-theme="c"]{
+  --bg:#FBFAF7; --bg2:#F0F3F1; --surf:#12211C; --ink:#12211C; --ink-dk:#12211C;
+  --mut:#5E6B64; --acc:#2E7D5B; --acc2:#F2B705; --line:rgba(18,33,28,.13);
+  --line-dk:rgba(18,33,28,.13);
+  --ft:'Bricolage Grotesque',sans-serif; --fb:'Outfit',sans-serif;
+  --h1:clamp(34px,5.8vw,68px); --h1w:800; --h1ls:-.032em; --h1lh:1.0;
+  --h2:clamp(26px,3.8vw,42px); --h2w:800; --h2ls:-.028em;
+  --rad:10px; --btnrad:6px; --imgrad:10px;
+  --kick-ls:.14em; --kick-w:700; --kick-tt:uppercase; --kick-fs:12px;
+  --body-fs:16.5px; --body-lh:1.66;
+  --img-filter:saturate(1.1) brightness(1.03);
+  --overlay:linear-gradient(0deg,rgba(18,33,28,.9) 4%,rgba(18,33,28,.25) 58%,rgba(18,33,28,.42));
+  --card-bg:#FFFFFF; --card-ink:#12211C;
+  --sep:1px solid var(--line);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0 0 44px;background:var(--bg);color:var(--ink);font-family:var(--fb);
+     font-size:var(--body-fs);line-height:var(--body-lh);-webkit-font-smoothing:antialiased;
+     transition:background .35s ease,color .35s ease}
+img{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+
+h1,h2,h3{font-family:var(--ft);margin:0}
+h1{font-size:var(--h1);font-weight:var(--h1w);letter-spacing:var(--h1ls);line-height:var(--h1lh)}
+h2{font-size:var(--h2);font-weight:var(--h2w);letter-spacing:var(--h2ls);line-height:1.1}
+h3{font-size:clamp(19px,2.3vw,26px);font-weight:var(--h2w);letter-spacing:var(--h2ls);line-height:1.15}
+.kick{font-size:var(--kick-fs);letter-spacing:var(--kick-ls);text-transform:var(--kick-tt);
+      font-weight:var(--kick-w);color:var(--acc);font-family:var(--fb)}
+[data-theme="b"] .kick{font-style:italic;font-family:var(--fb)}
+p{margin:0 0 15px}
+.lede{color:var(--mut);max-width:64ch}
+
+/* ─── BARRE DE SÉLECTION ─────────────────────────────── */
+.picker{position:fixed;top:0;left:0;right:0;z-index:200;
+        background:rgba(20,20,20,.93);backdrop-filter:blur(14px);
+        border-bottom:1px solid rgba(255,255,255,.12);color:#fff}
+.picker .in{max-width:1200px;margin:0 auto;padding:9px clamp(14px,4vw,44px);
+            display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.picker .lbl{font-family:Archivo,sans-serif;font-size:10.5px;letter-spacing:.16em;
+             text-transform:uppercase;opacity:.6;font-weight:600}
+.tabs{display:flex;gap:0;border:1px solid rgba(255,255,255,.22);border-radius:4px;overflow:hidden}
+.tabs button{appearance:none;border:0;cursor:pointer;background:transparent;color:#fff;
+             font-family:Archivo,sans-serif;font-size:12.5px;font-weight:600;
+             padding:8px 15px;display:flex;align-items:center;gap:8px;
+             border-right:1px solid rgba(255,255,255,.18);transition:background .18s}
+.tabs button:last-child{border-right:0}
+.tabs button:hover{background:rgba(255,255,255,.10)}
+.tabs button[aria-pressed="true"]{background:#fff;color:#111}
+.tabs .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0;
+           box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.tabs button[aria-pressed="true"] .dot{box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.picker .sp{flex:1}
+.picker .hint{font-family:Archivo,sans-serif;font-size:11.5px;opacity:.62}
+.picker .hint b{opacity:1}
+.picker a.pm{font-family:Archivo,sans-serif;font-size:11.5px;font-weight:600;
+             text-decoration:none;border:1px solid rgba(255,255,255,.28);
+             padding:7px 13px;border-radius:4px}
+.picker a.pm:hover{background:rgba(255,255,255,.10)}
+@media(max-width:720px){.picker .hint{display:none}}
+
+/* ─── NAV DU SITE ────────────────────────────────────── */
+.topbar{background:var(--surf);color:var(--bg);font-size:13px;font-family:var(--fb)}
+[data-theme="a"] .topbar{background:#141414;color:var(--mut)}
+[data-theme="b"] .topbar{background:#1F3D2B;color:#DFD2BA}
+[data-theme="c"] .topbar{background:#12211C;color:#B6C4BD}
+.topbar .in{max-width:1200px;margin:0 auto;padding:8px clamp(18px,4vw,44px);
+            display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.topbar a{text-decoration:none;opacity:.85}
+.topbar .sp{flex:1}
+
+.nav{position:sticky;top:47px;z-index:100;background:var(--bg);border-bottom:var(--sep);
+     transition:background .35s}
+.nav .in{max-width:1200px;margin:0 auto;padding:12px clamp(18px,4vw,44px);
+         display:flex;align-items:center;gap:24px}
+.nav img{height:52px;width:auto}
+.nav ul{list-style:none;display:flex;gap:22px;margin:0;padding:0;flex-wrap:wrap;
+        font-size:14px;font-weight:500}
+.nav a{text-decoration:none}
+.nav a:hover{color:var(--acc)}
+.nav .sp{flex:1}
+@media(max-width:880px){.nav ul{display:none}}
+
+.btn{display:inline-block;text-decoration:none;font-family:var(--fb);font-weight:600;
+     font-size:14px;padding:13px 26px;border-radius:var(--btnrad);cursor:pointer;
+     background:var(--acc);color:#fff;border:0;transition:opacity .2s}
+[data-theme="a"] .btn{background:transparent;border:1px solid var(--acc);color:var(--acc);
+     font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;padding:13px 26px}
+[data-theme="b"] .btn{background:var(--acc2);color:#1F3D2B;font-family:var(--ft);font-size:13px}
+[data-theme="c"] .btn{background:var(--acc2);color:#12211C;font-weight:700}
+.btn:hover{opacity:.86}
+.btn.btn-2{background:transparent;border:1px solid rgba(255,255,255,.55);color:#fff;
+     font-family:var(--fb);font-weight:600}
+[data-theme="a"] .btn.btn-2{border-color:rgba(255,255,255,.45);color:#fff;
+     font-size:11.5px;letter-spacing:.2em;text-transform:uppercase}
+[data-theme="b"] .btn.btn-2{background:transparent;color:#fff;font-family:var(--fb);font-size:15px}
+[data-theme="c"] .btn.btn-2{background:transparent;color:#fff}
+
+/* ─── HERO ───────────────────────────────────────────── */
+.hero{position:relative;min-height:min(78vh,620px);display:flex;align-items:flex-end;
+      overflow:hidden}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+          filter:var(--img-filter);transition:filter .35s}
+.hero .ov{position:absolute;inset:0;background:var(--overlay);transition:background .35s}
+.hero .ct{position:relative;z-index:3;padding:0 0 clamp(38px,6vw,74px);max-width:800px}
+.hero h1{color:#fff;margin:12px 0 16px;text-shadow:0 2px 26px rgba(0,0,0,.42)}
+.hero .kick{color:var(--acc2);text-shadow:0 1px 14px rgba(0,0,0,.6)}
+[data-theme="a"] .hero .kick{color:var(--acc)}
+.hero p{color:rgba(255,255,255,.94);max-width:52ch;font-size:clamp(16px,1.7vw,19px);
+        text-shadow:0 1px 16px rgba(0,0,0,.5)}
+.hero .acts{display:flex;gap:11px;flex-wrap:wrap;margin-top:22px}
+
+/* bandeau infos pratiques sous le hero */
+.strip{background:var(--surf);color:var(--bg)}
+[data-theme="a"] .strip{background:var(--acc);color:#0A0A0A}
+[data-theme="b"] .strip{background:var(--acc);color:#F4E9D7}
+[data-theme="c"] .strip{background:var(--surf);color:#FBFAF7}
+.strip .in{max-width:1200px;margin:0 auto;padding:16px clamp(18px,4vw,44px);
+           display:flex;gap:clamp(18px,4vw,52px);flex-wrap:wrap;
+           font-size:14.5px;align-items:center;justify-content:center;text-align:center}
+.strip b{font-weight:700}
+[data-theme="b"] .strip{font-family:var(--fb)}
+
+/* ─── SECTIONS ───────────────────────────────────────── */
+section{padding:clamp(48px,7vw,90px) 0}
+.sec-head{max-width:70ch;margin-bottom:clamp(26px,4vw,44px)}
+.sec-head h2{margin:8px 0 12px}
+.center{text-align:center;margin-left:auto;margin-right:auto}
+
+/* intro éditoriale */
+.intro-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(26px,5vw,64px);
+            align-items:center}
+@media(max-width:860px){.intro-grid{grid-template-columns:1fr}}
+.intro-grid img{border-radius:var(--imgrad);filter:var(--img-filter);
+                aspect-ratio:4/3;object-fit:cover;width:100%}
+
+/* grille animaux — carrousel */
+.rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);
+      gap:clamp(12px,2vw,22px);overflow-x:auto;scroll-snap-type:x mandatory;
+      padding-bottom:12px;scrollbar-width:thin}
+.rail>*{scroll-snap-align:start}
+.card{background:var(--card-bg);color:var(--card-ink);border-radius:var(--imgrad);
+      overflow:hidden;border:var(--sep);display:flex;flex-direction:column;
+      transition:transform .25s,box-shadow .25s}
+.card:hover{transform:translateY(-4px)}
+[data-theme="c"] .card:hover{box-shadow:0 12px 34px rgba(18,33,28,.14)}
+.card img{aspect-ratio:4/3;object-fit:cover;width:100%;filter:var(--img-filter)}
+.card .b{padding:16px 18px 20px}
+.card h3{font-size:clamp(17px,2vw,21px);margin-bottom:6px}
+.card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
+[data-theme="a"] .card{border-color:var(--line)}
+
+/* 3 offres */
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:clamp(14px,2.4vw,26px)}
+.tile{position:relative;border-radius:var(--imgrad);overflow:hidden;min-height:330px;
+      display:flex;align-items:flex-end}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+          filter:var(--img-filter);transition:transform .5s}
+.tile:hover img{transform:scale(1.05)}
+.tile .ov{position:absolute;inset:0;background:var(--overlay)}
+.tile .b{position:relative;z-index:3;padding:26px 24px;color:#fff}
+.tile h3{color:#fff;margin-bottom:7px}
+.tile p{color:rgba(255,255,255,.86);font-size:14.5px;margin:0}
+.tile .k{font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;
+         color:var(--acc2);margin-bottom:8px;font-family:var(--fb)}
+[data-theme="a"] .tile .k{color:var(--acc)}
+[data-theme="b"] .tile .k{font-style:normal}
+
+/* événements */
+.ev{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:clamp(14px,2.4vw,24px)}
+.evc{background:var(--card-bg);color:var(--card-ink);border:var(--sep);
+     border-radius:var(--imgrad);overflow:hidden}
+.evc img{aspect-ratio:16/9;object-fit:cover;width:100%;filter:var(--img-filter)}
+.evc .b{padding:20px 22px 24px}
+.evc .d{font-size:12.5px;font-weight:600;color:var(--acc);margin-bottom:8px;
+        letter-spacing:.04em;font-family:var(--fb)}
+.evc h3{font-size:19px;margin-bottom:10px;line-height:1.25}
+.evc a{font-size:14px;font-weight:600;color:var(--acc);text-decoration:none}
+
+/* valeurs */
+.vals{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:clamp(20px,3vw,40px)}
+.val{border-top:2px solid var(--acc);padding-top:18px}
+[data-theme="b"] .val{border-top-width:3px}
+.val h3{font-size:19px;margin-bottom:9px}
+.val p{color:var(--mut);font-size:14.8px;margin:0}
+
+/* avis */
+.avis-wrap{background:var(--bg2);transition:background .35s}
+.avis{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+      gap:clamp(14px,2.4vw,24px)}
+.q{background:var(--card-bg);color:var(--card-ink);border:var(--sep);
+   border-radius:var(--imgrad);padding:24px 24px 26px}
+[data-theme="a"] .q{background:#141414}
+.q .st{color:var(--acc2);font-size:14px;letter-spacing:2px;margin-bottom:11px}
+[data-theme="a"] .q .st{color:var(--acc)}
+.q p{font-size:15px;line-height:1.65;margin:0 0 14px}
+[data-theme="b"] .q p{font-style:italic}
+.q .a{font-size:13px;color:var(--mut);font-weight:600;font-family:var(--fb)}
+
+/* infos pratiques */
+.prat{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:0;border-top:var(--sep);border-bottom:var(--sep)}
+.prat>div{padding:24px 24px 28px;border-right:var(--sep)}
+.prat>div:last-child{border-right:0}
+@media(max-width:900px){.prat>div{border-right:0;border-bottom:var(--sep)}}
+.prat h3{font-size:17px;margin-bottom:11px}
+.prat p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.7}
+.prat .big{font-family:var(--ft);font-size:clamp(30px,4vw,44px);color:var(--acc);
+           font-weight:var(--h2w);line-height:1;margin-bottom:6px}
+
+/* CTA final */
+.cta{position:relative;overflow:hidden;text-align:center}
+.cta img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+         filter:var(--img-filter)}
+.cta .ov{position:absolute;inset:0;background:var(--overlay)}
+.cta .b{position:relative;z-index:3;padding:clamp(56px,8vw,110px) 0;color:#fff}
+.cta h2{color:#fff;margin:10px auto 16px;max-width:20ch}
+.cta p{color:rgba(255,255,255,.88);max-width:52ch;margin:0 auto 24px}
+
+/* footer */
+footer{background:var(--surf);color:var(--bg);padding:clamp(40px,6vw,66px) 0 30px}
+[data-theme="a"] footer{background:#141414;color:var(--mut)}
+[data-theme="b"] footer{background:#1F3D2B;color:#DFD2BA}
+[data-theme="c"] footer{background:#12211C;color:#B6C4BD}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+       gap:clamp(24px,4vw,50px)}
+footer h4{font-family:var(--ft);font-size:17px;margin:0 0 13px;
+          color:#fff;font-weight:var(--h2w)}
+[data-theme="a"] footer h4{color:var(--acc)}
+[data-theme="b"] footer h4{color:var(--acc2)}
+[data-theme="c"] footer h4{color:#fff}
+footer p,footer li{font-size:14.5px;line-height:1.75;margin:0}
+footer ul{list-style:none;padding:0;margin:0}
+footer a{text-decoration:none;opacity:.88}
+.fbot{margin-top:clamp(28px,4vw,46px);padding-top:20px;
+      border-top:1px solid rgba(255,255,255,.14);font-size:12.5px;opacity:.6}
+
+/* ─── PANNEAU MÉMO (plus / moins) ────────────────────── */
+.memo{position:fixed;right:0;bottom:0;z-index:190;font-family:Archivo,sans-serif}
+.memo .tog{position:absolute;right:16px;bottom:16px;background:#141414;color:#fff;
+           border:1px solid rgba(255,255,255,.22);border-radius:100px;
+           padding:11px 20px;font-size:12.5px;font-weight:600;cursor:pointer;
+           display:flex;align-items:center;gap:8px;white-space:nowrap;
+           box-shadow:0 6px 22px rgba(0,0,0,.28)}
+.memo .tog:hover{background:#222}
+.memo .panel{position:absolute;right:16px;bottom:16px;width:min(370px,calc(100vw - 32px));
+             background:#141414;color:#fff;border:1px solid rgba(255,255,255,.16);
+             border-radius:10px;padding:20px 22px 22px;
+             box-shadow:0 18px 50px rgba(0,0,0,.42);display:none}
+.memo.open .panel{display:block}
+.memo.open .tog{display:none}
+.memo .x{position:absolute;top:12px;right:14px;background:transparent;border:0;
+         color:rgba(255,255,255,.55);font-size:22px;cursor:pointer;line-height:1}
+.memo .x:hover{color:#fff}
+.memo h5{margin:0 0 3px;font-size:16px;font-weight:700}
+.memo .sub{font-size:11.5px;opacity:.55;margin:0 0 15px;letter-spacing:.03em}
+.memo .row{display:flex;gap:10px;margin-bottom:9px;font-size:13.5px;line-height:1.45}
+.memo .row .s{flex-shrink:0;width:17px;font-weight:700}
+.memo .plus .s{color:#5FE3AE}
+.memo .moins .s{color:#FF9B7A}
+.memo hr{border:0;border-top:1px solid rgba(255,255,255,.14);margin:14px 0}
+.memo .ask{font-size:12.5px;opacity:.72;line-height:1.55}
+.memo .ask b{opacity:1}
+@media print{.picker,.memo,.logobar{display:none}}
+
+/* ─── LOGO DANS LE SITE ──────────────────────────────── */
+.nav .logo-slot{height:56px;display:flex;align-items:center;color:var(--ink)}
+.nav .logo-slot svg{height:100%;width:auto;max-width:270px}
+footer .logo-slot{height:78px;display:flex;align-items:center;color:#fff;margin-bottom:14px}
+[data-theme="a"] footer .logo-slot{color:var(--acc)}
+[data-theme="b"] footer .logo-slot{color:var(--acc2)}
+footer .logo-slot svg{height:100%;width:auto;max-width:250px}
+.logo-slot{--logo-neg:var(--bg)}
+footer .logo-slot{--logo-neg:var(--surf)}
+[data-theme="a"] footer .logo-slot{--logo-neg:#141414}
+[data-theme="b"] footer .logo-slot{--logo-neg:#1F3D2B}
+[data-theme="c"] footer .logo-slot{--logo-neg:#12211C}
+[data-theme="a"] .logo-slot{--logo-ft:'Cormorant Garamond',serif;--logo-fb:'Jost',sans-serif}
+[data-theme="b"] .logo-slot{--logo-ft:'Alfa Slab One',serif;--logo-fb:'Source Serif 4',serif}
+[data-theme="c"] .logo-slot{--logo-ft:'Bricolage Grotesque',sans-serif;--logo-fb:'Outfit',sans-serif}
+/* logo raster détouré : ne prend pas la couleur du thème */
+.nav .logo-slot.is-raster{height:92px}
+.logo-slot.is-raster img{height:100%;width:auto;object-fit:contain;display:block}
+footer .logo-slot.is-raster{height:112px}
+.logobtn .vis.is-raster{display:flex;align-items:center;justify-content:center;height:62px}
+.logobtn .vis.is-raster img{max-height:62px;max-width:100%;width:auto;object-fit:contain}
+
+/* ─── BARRE LOGOS ────────────────────────────────────── */
+.logobar{position:fixed;left:0;right:0;bottom:0;z-index:195;
+         background:rgba(20,20,20,.95);backdrop-filter:blur(14px);
+         border-top:1px solid rgba(255,255,255,.14);color:#fff;
+         font-family:Archivo,sans-serif;transform:translateY(calc(100% - 42px));
+         transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.logobar.open{transform:translateY(0)}
+.logobar .handle{height:42px;display:flex;align-items:center;gap:12px;cursor:pointer;
+                 padding:0 clamp(14px,4vw,44px);max-width:1200px;margin:0 auto;
+                 font-size:12.5px;font-weight:600}
+.logobar .handle .cur{opacity:.6;font-weight:400}
+.logobar .handle .chev{margin-left:auto;transition:transform .3s;opacity:.6;font-size:15px}
+.logobar.open .handle .chev{transform:rotate(180deg)}
+.logobar .body{max-width:1200px;margin:0 auto;padding:4px clamp(14px,4vw,44px) 20px}
+.logogrid{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}
+@media(max-width:900px){.logogrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.logogrid{grid-template-columns:repeat(2,1fr)}}
+.logobtn{background:#fff;border:2px solid transparent;border-radius:7px;cursor:pointer;
+         padding:14px 10px 10px;display:flex;flex-direction:column;align-items:center;
+         gap:9px;transition:border-color .18s,transform .18s;color:#16161A;
+         --logo-neg:#fff;--logo-ft:'Archivo',sans-serif;--logo-fb:'Archivo',sans-serif}
+.logobtn:hover{transform:translateY(-2px)}
+.logobtn[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.22)}
+.logobtn .vis{height:48px;display:flex;align-items:center;justify-content:center;width:100%}
+.logobtn .vis svg{max-height:100%;max-width:100%;width:auto;height:auto}
+.logobtn .nm{font-size:11px;font-weight:700;line-height:1.2;text-align:center}
+.logobtn .tip{font-size:9.5px;opacity:.62;line-height:1.25;text-align:center;min-height:12px}
+.logobtn .reco{font-size:9px;font-weight:700;color:#0E7A55;letter-spacing:.04em}
+.logobar .foot{margin-top:12px;font-size:11.5px;opacity:.6;line-height:1.5}
+.logobar .foot b{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ═══ SÉLECTEUR D'UNIVERS ═══ -->
+<div class="picker">
+  <div class="in">
+    <span class="lbl">Univers</span>
+    <div class="tabs" role="group" aria-label="Choisir un univers">
+      <button data-set="a" aria-pressed="true"><span class="dot" style="background:#C9A227"></span>01 Noir Premium</button>
+      <button data-set="b" aria-pressed="false"><span class="dot" style="background:#B23A2E"></span>02 Lontan</button>
+      <button data-set="c" aria-pressed="false"><span class="dot" style="background:#2E7D5B"></span>03 Grand Air</button>
+    </div>
+    <span class="sp"></span>
+    <span class="hint">Cliquez pour <b>basculer d'univers</b> — mêmes photos, mêmes textes</span>
+  </div>
+</div>
+
+<!-- ═══ LE SITE ═══ -->
+<div class="topbar"><div class="in">
+  <span>0262 91 40 41</span>
+  <span>contact@croc-parc.re</span>
+  <span class="sp"></span>
+  <a href="#">Facebook</a><a href="#">Instagram</a>
+</div></div>
+
+<header class="nav"><div class="in">
+  <div class="logo-slot" id="logoNav"></div>
+  <span class="sp"></span>
+  <ul>
+    <li><a href="#">Accueil</a></li>
+    <li><a href="#animaux">Le parc animalier</a></li>
+    <li><a href="#loisirs">Le parc de loisirs</a></li>
+    <li><a href="#resto">La restauration</a></li>
+    <li><a href="#events">Évènementiel</a></li>
+    <li><a href="#contact">Nous contacter</a></li>
+  </ul>
+</div></header>
+
+<!-- HERO -->
+<div class="hero">
+  <img src="img/hero.jpg" alt="Croc Parc, forêt de l'Étang-Salé">
+  <div class="ov"></div>
+  <div class="wrap ct">
+    <div class="kick">Forêt de l'Étang-Salé</div>
+    <h1>Le parc animalier, nature et loisirs de La Réunion</h1>
+    <p>4,7 hectares de forêt protégée, des crocodiles du Nil, des makis catta, un jardin botanique et de quoi jouer toute la journée.</p>
+    <div class="acts">
+      <a href="#contact" class="btn">Programmer votre visite</a>
+      <a href="#animaux" class="btn btn-2">Découvrir le parc</a>
+    </div>
+  </div>
+</div>
+
+<div class="strip"><div class="in">
+  <span><b>Ouverture</b> — de 10h à 17h</span>
+  <span><b>Vacances scolaires</b> — ouvert 7j/7</span>
+  <span><b>Tarif unique</b> — 15 € par personne, dès 3 ans</span>
+</div></div>
+
+<!-- INTRO -->
+<section>
+  <div class="wrap intro-grid">
+    <div>
+      <div class="kick">Une journée à Croc Parc</div>
+      <h2 style="margin:10px 0 16px">Un site chargé d'histoire</h2>
+      <p class="lede">Croc Parc a été <strong>créé en 1999 par Monsieur Georges Flour</strong>. Ses 4,7 hectares, situés dans la forêt protégée d'Étang-Salé, n'ont cessé d'évoluer pour vous proposer aujourd'hui un parc unique en son genre sur l'île de La Réunion.</p>
+      <p class="lede">Des animaux, des plantes remarquables, des jeux et des animations forment un cocktail de bonheur à partager sans modération en famille. Mais Croc Parc est également un lieu unique pour fêter tous vos évènements.</p>
+      <p class="lede" style="margin-bottom:22px"><strong>Venez découvrir Croc Parc, vous ne serez pas déçus !</strong></p>
+      <a href="#animaux" class="btn">En savoir plus</a>
+    </div>
+    <img src="img/parc.jpg" alt="Le parc">
+  </div>
+</section>
+
+<!-- ANIMAUX -->
+<section id="animaux" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kick">Le parc animalier</div>
+      <h2>Nos pensionnaires</h2>
+      <p class="lede">Un écrin de verdure et une collection animalière qui regorgent d'anecdotes à découvrir.</p>
+    </div>
+    <div class="rail">
+      <article class="card"><img src="img/croco.jpg" alt="Crocodile du Nil">
+        <div class="b"><h3>Crocodile du Nil</h3><p>Quatre bassins, mâles et femelles. Le nourrissage est l'un des grands moments de la journée.</p></div></article>
+      <article class="card"><img src="img/maki.jpg" alt="Maki catta">
+        <div class="b"><h3>Maki catta</h3><p>Le lémurien à queue annelée de Madagascar, curieux et bavard.</p></div></article>
+      <article class="card"><img src="img/paon.jpg" alt="Paon bleu">
+        <div class="b"><h3>Paon bleu</h3><p>Il déambule en liberté dans le parc et fait la roue quand l'envie lui prend.</p></div></article>
+      <article class="card"><img src="img/tortue.jpg" alt="Tortue étoilée">
+        <div class="b"><h3>Tortue étoilée</h3><p>Discrète et paisible, à observer dans son enclos ombragé.</p></div></article>
+      <article class="card"><img src="img/mini-ferme.jpg" alt="Mini-ferme">
+        <div class="b"><h3>Mini-ferme</h3><p>Chèvres, lapins et volailles — le brossage des cabris fait toujours son effet.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- VISITE / ATELIERS / LOISIRS -->
+<section id="loisirs" style="padding-top:0">
+  <div class="wrap">
+    <div class="trio">
+      <article class="tile"><img src="img/visite-guidee.jpg" alt="Visite guidée"><div class="ov"></div>
+        <div class="b"><div class="k">Sur réservation</div><h3>Visite guidée</h3>
+        <p>Visitez Croc Parc autrement. Sur réservation, hors vacances scolaires.</p></div></article>
+      <article class="tile"><img src="img/animations-ludiques-chasse-au-tresor.jpg" alt="Ateliers scolaires"><div class="ov"></div>
+        <div class="b"><div class="k">5 € par élève</div><h3>Ateliers scolaires</h3>
+        <p>Ludiques et interactifs — s'amuser tout en apprenant.</p></div></article>
+      <article class="tile"><img src="img/mini-golf.jpg" alt="Parc de loisirs"><div class="ov"></div>
+        <div class="b"><div class="k">Grande esplanade</div><h3>Parc de loisirs</h3>
+        <p>Mini-golf, structures gonflables, aire de jeux et animations qui évoluent en permanence.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- RESTAURATION -->
+<section id="resto" class="avis-wrap">
+  <div class="wrap intro-grid">
+    <img src="img/event1.jpg" alt="La restauration">
+    <div>
+      <div class="kick">Restauration</div>
+      <h2 style="margin:10px 0 16px">Croc'Snack &amp; Maï-Taï</h2>
+      <p class="lede">Croc Parc mérite que vous y passiez la journée pour profiter pleinement des animaux, des animations, des jeux et de la beauté végétale du parc.</p>
+      <p class="lede">Deux options le midi : le <strong>Croc'Snack</strong> pour manger sur le pouce, et le <strong>Maï-Taï Restaurant</strong> pour savourer à votre rythme. Les pique-niques sont également autorisés.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ÉVÉNEMENTS -->
+<section id="events">
+  <div class="wrap">
+    <div class="sec-head"><div class="kick">Évènements à venir</div>
+      <h2>Ce qui vous attend</h2></div>
+    <div class="ev">
+      <article class="evc"><img src="img/ev1.jpg" alt="Vacances">
+        <div class="b"><div class="d">Du 10 au 26 octobre 2026</div>
+        <h3>Vos vacances à Croc Parc : nature, animaux et loisirs pour toute la famille !</h3>
+        <a href="#">Voir plus →</a></div></article>
+      <article class="evc"><img src="img/ev2.jpg" alt="Animations">
+        <div class="b"><div class="d">Tous les jours</div>
+        <h3>Les animations de Croc Parc : un programme pour toute la semaine !</h3>
+        <a href="#">Voir tous les évènements →</a></div></article>
+      <article class="evc"><img src="img/peacock.jpg" alt="Anniversaires">
+        <div class="b"><div class="d">Toute l'année · sur réservation</div>
+        <h3>Anniversaires enfants : chasse au trésor, nourrissage et animateurs dédiés</h3>
+        <a href="#">Demander une formule →</a></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- VALEURS -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head"><div class="kick">Nos valeurs</div>
+      <h2>Ce qui nous tient à cœur</h2></div>
+    <div class="vals">
+      <div class="val"><h3>Protection de la biodiversité</h3>
+        <p>De par son emplacement dans la forêt protégée d'Étang-Salé, Croc Parc a à cœur de participer à la protection de la faune et de la flore locales.</p></div>
+      <div class="val"><h3>Bien-être animal</h3>
+        <p>Le bien-être animal est notre priorité : nos animaux ne manquent absolument de rien — espace, câlins, tranquillité et nourriture variée.</p></div>
+      <div class="val"><h3>Sensibilisation et formation</h3>
+        <p>Notre site s'engage pour l'éducation des jeunes générations et la formation de stagiaires aux soins et à la protection animale et végétale.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AVIS -->
+<section class="avis-wrap">
+  <div class="wrap">
+    <div class="sec-head center"><div class="kick">Avis</div>
+      <h2>Ce qu'en disent nos visiteurs</h2></div>
+    <div class="avis">
+      <div class="q"><div class="st">★★★★★</div>
+        <p>« Nous avons fêté les 3 ans de mon fils au parc. Ce fut une journée réussie grâce à toute l'équipe. L'animateur a été à l'écoute, patient et a appris plein de choses aux enfants. Le parc a connu une nette amélioration, l'équipe est très professionnelle et passionnée. »</p>
+        <div class="a">Émilie — Tripadvisor</div></div>
+      <div class="q"><div class="st">★★★★★</div>
+        <p>« L'équipe est très sympathique, les activités sont bien pensées, les enfants ont de quoi jouer et s'amuser. Les animaux sont très bien traités et ne demandent qu'à être aimés : ce qui démontre bien qu'ils sont bien traités. Je recommande sans hésiter ! »</p>
+        <div class="a">Avis Google</div></div>
+      <div class="q"><div class="st">★★★★★</div>
+        <p>« Les enfants ont adoré leur après-midi ; les ateliers avec les animaux étaient géniaux ! L'animatrice a été ultra compétente et très à l'écoute des enfants. Merci pour ce bon moment, nous reviendrons ! »</p>
+        <div class="a">Dorothée T. — Tripadvisor</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- INFOS PRATIQUES -->
+<section id="contact">
+  <div class="wrap">
+    <div class="sec-head"><div class="kick">Infos pratiques</div>
+      <h2>Préparer votre venue</h2></div>
+    <div class="prat">
+      <div><h3>Horaires d'ouverture</h3>
+        <p>Du mardi au dimanche hors vacances scolaires, de 10h à 17h.<br>Tous les jours pendant les vacances et jours fériés, lundi compris.</p></div>
+      <div><h3>Tarifs</h3>
+        <div class="big">15 €</div>
+        <p>Tarif unique par personne, adulte et enfant dès 3 ans.<br>Gratuit pour les moins de 3 ans.<br>Scolaire : 5 €. CSE / Groupe : nous contacter.</p></div>
+      <div><h3>Accessibilité</h3>
+        <p>Notre site est accessible aux PMR et aux poussettes. La circulation de véhicules dans le parc est réglementée.</p></div>
+      <div><h3>Parking</h3>
+        <p>Un grand parking extérieur dans la forêt d'Étang-Salé, ainsi qu'un parking privatif pour vos évènements et le restaurant.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+  <img src="img/lemurien.png" alt="" style="object-position:center 30%">
+  <div class="ov"></div>
+  <div class="wrap b">
+    <div class="kick">Programmez votre visite</div>
+    <h2>Une journée inoubliable vous attend</h2>
+    <p>En quelques clics, parlez-nous de votre projet : en famille, entre amis, en groupe scolaire, associatif ou en comité d'entreprise.</p>
+    <a href="#" class="btn">Nous contacter</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div><div class="logo-slot" id="logoFoot"></div>
+        <p>Le parc animalier, nature et loisirs de La Réunion.</p></div>
+      <div><h4>Contact</h4>
+        <p>1, route forestière<br>97427 L'Étang-Salé<br><br>0262 91 40 41<br>contact@croc-parc.re</p></div>
+      <div><h4>Liens rapides</h4>
+        <ul><li><a href="#animaux">Le parc animalier</a></li><li><a href="#loisirs">Le parc de loisirs</a></li>
+        <li><a href="#resto">La restauration</a></li><li><a href="#events">Évènementiel</a></li>
+        <li><a href="#">Mentions légales</a></li></ul></div>
+      <div><h4>Tarif</h4>
+        <p>Adultes et enfants dès 3 ans : 15 €<br>Gratuité pour les moins de 3 ans<br>Scolaire : 5 €</p></div>
+    </div>
+    <div class="fbot">Ce site a été financé à l'aide du FEDER (REACT-UE) dans le cadre de la réponse de l'Union européenne à la pandémie COVID-19. L'Europe s'engage à La Réunion.</div>
+  </div>
+</footer>
+
+<!-- ═══ MÉMO PLUS / MOINS ═══ -->
+<div class="memo" id="memo">
+  <button class="tog" onclick="document.getElementById('memo').classList.add('open')">
+    <span id="tglbl">Les + et les −</span></button>
+  <div class="panel">
+    <button class="x" onclick="document.getElementById('memo').classList.remove('open')">×</button>
+    <h5 id="mnom">Noir Premium &amp; Or</h5>
+    <p class="sub" id="msub">Répond à « tout fait en noir premium »</p>
+    <div id="mplus"></div>
+    <div id="mmoins" style="margin-top:12px"></div>
+    <hr>
+    <div class="ask">Dites-moi simplement <b>quel univers vous parle</b> — même à moitié, même en mélangeant. Je pousse ensuite celui-là jusqu'au bout.</div>
+  </div>
+</div>
+
+<!-- ═══ BARRE DE LOGOS ═══ -->
+<div class="logobar" id="logobar">
+  <div class="handle" onclick="document.getElementById('logobar').classList.toggle('open')">
+    <span>🐊 Choisir le logo</span>
+    <span class="cur" id="logoCurLbl">— L'Œil</span>
+    <span class="chev">▲</span>
+  </div>
+  <div class="body">
+    <div class="logogrid" id="logogrid"></div>
+    <div class="foot">Un logo est déjà posé sur le site, choisi pour aller avec l'univers actif.
+    <b>Cliquez-en un autre</b> pour le voir tout de suite, partout sur la page.</div>
+  </div>
+</div>
+
+<script src="logos.js"></script>
+<script>
+const DATA = {
+  a:{nom:"Noir Premium & Or", sub:"Répond à « tout fait en noir premium »",
+     plus:["Vend l'événementiel : privatisations, salons, mariages","Aucun parc de l'île ne joue ce registre","Superbe en signalétique gravée","Vieillit lentement"],
+     moins:["Distant pour les Gramoun","Peut renforcer le « c'est cher »","Exige des photos irréprochables"]},
+  b:{nom:"Lontan", sub:"Répond à « travailler réunionnais »",
+     plus:["Impossible à copier — ancré ici","Parle aux Gramoun et aux familles péi","Touche la diaspora","Le lambrequin décline tout"],
+     moins:["Déclinaison sobre à prévoir pour le B2B","Le créole doit sonner juste","Titres uniquement pour la slab"]},
+  c:{nom:"Grand Air", sub:"Ma proposition — pensé pour le web",
+     plus:["Le plus efficace sur le web et la billetterie","Le plus rassurant pour une famille","Justifie les 15 € en montrant tout","Le moins cher à produire"],
+     moins:["Le moins premium pour une privatisation","Registre proche d'autres parcs","Le vert doit rester un accent"]}
+};
+const btns=[...document.querySelectorAll('.tabs button')];
+let curLogo=null;
+
+function paintLogo(){
+  const k=curLogo || CP_LOGO_DEFAUT[document.documentElement.dataset.theme];
+  const L=CP_LOGOS[k];
+  if(!L) return;
+  document.querySelectorAll('.logo-slot').forEach(el=>{
+    el.classList.toggle('is-raster', !!L.raster);
+    if(L.raster){
+      el.innerHTML='<img src="'+L.raster+'" alt="Croc Parc &amp; Cie">';
+      return;
+    }
+    el.innerHTML=L.svg;
+    const svg=el.querySelector('svg');
+    if(svg) svg.style.width = (svg.parentElement.clientHeight * L.ratio) + 'px';
+  });
+  logoCurLbl.textContent='— '+L.nom;
+  document.querySelectorAll('.logobtn').forEach(b=>
+    b.setAttribute('aria-pressed', b.dataset.key===k));
+}
+
+function buildLogoGrid(){
+  const theme=document.documentElement.dataset.theme;
+  const accord=CP_LOGO_ACCORD[theme]||{};
+  logogrid.innerHTML=Object.entries(CP_LOGOS).map(([k,L])=>{
+    const tip = accord[k] ? `<div class="reco">${accord[k]}</div>` : `<div class="tip">${L.desc}</div>`;
+    const vis = L.raster
+      ? `<span class="vis is-raster"><img src="${L.raster}" alt=""></span>`
+      : `<span class="vis">${L.svg}</span>`;
+    return `<button class="logobtn" data-key="${k}" aria-pressed="false" title="${L.desc}">
+      ${vis}
+      <span class="nm">${L.nom}</span>
+      ${tip}
+    </button>`;
+  }).join('');
+  logogrid.querySelectorAll('.logobtn').forEach(b=>{
+    b.onclick=()=>{ curLogo=b.dataset.key; paintLogo(); try{localStorage.setItem('cp-logo',curLogo)}catch(e){} };
+  });
+  paintLogo();
+}
+
+function apply(k){
+  document.documentElement.dataset.theme=k;
+  btns.forEach(b=>b.setAttribute('aria-pressed', b.dataset.set===k));
+  const d=DATA[k];
+  mnom.textContent=d.nom; msub.textContent=d.sub; tglbl.textContent=d.nom+' — les + et les −';
+  mplus.innerHTML=d.plus.map(x=>`<div class="row plus"><span class="s">+</span><span>${x}</span></div>`).join('');
+  mmoins.innerHTML=d.moins.map(x=>`<div class="row moins"><span class="s">−</span><span>${x}</span></div>`).join('');
+  try{localStorage.setItem('cp-univers',k)}catch(e){}
+  if(location.hash.slice(1)!==k) history.replaceState(null,'','#'+k);
+  buildLogoGrid();
+}
+btns.forEach(b=>b.onclick=()=>apply(b.dataset.set));
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='1')apply('a'); if(e.key==='2')apply('b'); if(e.key==='3')apply('c');
+});
+try{ const savedLogo=localStorage.getItem('cp-logo'); if(savedLogo && CP_LOGOS[savedLogo]) curLogo=savedLogo; }catch(e){}
+let init=(location.hash.slice(1)||(()=>{try{return localStorage.getItem('cp-univers')}catch(e){return null}})()||'a');
+apply(['a','b','c'].includes(init)?init:'a');
+window.addEventListener('resize',paintLogo);
+</script>
+</body>
+</html>
